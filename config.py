@@ -26,7 +26,7 @@ def prompt(text,default=None):
 ####################
 defaults={
     'proxy': {'host': None, 'port': None, 'type': 'socks5'},
-    'sina': {'username': None, 'password': None, 'secret': None, 'use_proxy': False},
+    'sina': {'username': None, 'password': None, 'appkey': None, 'use_proxy': False},
     'twitter': {'username': None, 'use_proxy': True},
 }
 CONFIG_FILE='config.yaml'
@@ -52,7 +52,7 @@ if (not config['sina']['password']) or query_yn('change passwords? (yes/no)%s:',
 cipher=chpwd and secure.getcipher(password)
 sina_user=prompt('sina username %s:', config['sina']['username'])
 sina_pwd=chpwd and secure.encode(cipher,getpass.getpass('sina password:')) or config['sina']['password']
-sina_secret=chpwd and secure.encode(cipher,getpass.getpass('sina api secret:')) or config['sina']['secret']
+sina_appkey=chpwd and secure.encode(cipher,getpass.getpass('sina api appkey:')) or config['sina']['appkey']
 use_proxy_sina=query_yn('use proxy on sina? (yes/no) %s:',(config['sina']['use_proxy'] and 'yes' or 'no'))
 twitter_user=prompt('twitter username %s:', config['twitter']['username'])
 use_proxy_twitter=query_yn('use proxy on twitter? (yes/no) %s:',(config['twitter']['use_proxy'] and 'yes' or 'no'))
@@ -67,7 +67,7 @@ else:
 
 config={
     'proxy': {'host': host, 'port': port, 'type': t},
-    'sina': {'username': sina_user, 'password': sina_pwd, 'secret': sina_secret, 'use_proxy': use_proxy_sina},
+    'sina': {'username': sina_user, 'password': sina_pwd, 'appkey': sina_appkey, 'use_proxy': use_proxy_sina},
     'twitter': {'username': twitter_user, 'use_proxy': use_proxy_twitter},
 }
 

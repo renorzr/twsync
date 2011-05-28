@@ -111,7 +111,7 @@ def send_sina_msgs(username,password,msg):
     }
     form_data = urllib.urlencode(form_fields)
     proxy=config['twitter']['use_proxy'] and sync_proxy
-    result = url_fetch("http://api.t.sina.com.cn/statuses/update.xml?source="+sina_secret, #792169767",
+    result = url_fetch("http://api.t.sina.com.cn/statuses/update.xml?source="+sina_appkey,
       proxy=proxy,
       post=form_data,
       headers=['Authorization: '+auth]
@@ -160,7 +160,7 @@ f=file('config.yaml','r')
 config=yaml.load(f.read())
 f.close()
 sina_pwd=secure.decode(cipher,config['sina']['password'])
-sina_secret=secure.decode(cipher,config['sina']['secret'])
+sina_appkey=secure.decode(cipher,config['sina']['appkey'])
 if not sina_pwd:
   print 'incorrect admin password.'
   exit()
