@@ -16,8 +16,8 @@ import pycurl
 from StringIO import StringIO
 import logging
 import yaml
-import secure
 import getpass
+import os
 
 def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
   while(retry>0):
@@ -154,20 +154,24 @@ def parseTwitter(twitter_id,since_id="",):
 # main starts here
 ####################
 logging.basicConfig(filename='twsync.log',level=logging.DEBUG)
-pwd=getpass.getpass('input admin password to start:')
-cipher=secure.getcipher(pwd)
 f=file('config.yaml','r')
 config=yaml.load(f.read())
 f.close()
-sina_pwd=secure.decode(cipher,config['sina']['password'])
-sina_appkey=secure.decode(cipher,config['sina']['appkey'])
+sina_pwd=getpass.getpass('input sina password to start:')
+sina_appkey=config['sina']['appkey']
 if not sina_pwd:
-  print 'incorrect admin password.'
+  print 'need sina password to update'
   exit()
 sync_proxy=config['proxy']
 sync_proxy['type']=get_curl_proxy_type(config['proxy']['type'])
 
-while True:
-   latest=getLatest() 
-   parseTwitter(twitter_id=config['twitter']['username'],since_id=latest)
-   time.sleep(300)
+pid=os.fork()
+
+if pid:
+  print 'start sync daemon'
+else:
+  print 'sync daemon started'
+  while True:
+    latest=getLatest() 
+    parseTwitter(twitter_id=config['twitter']['username'],since_id=latest)
+    time.sleep(300)
