@@ -162,8 +162,10 @@ sina_appkey=config['sina']['appkey']
 if not sina_pwd:
   print 'need sina password to update'
   exit()
+
 sync_proxy=config['proxy']
-sync_proxy['type']=get_curl_proxy_type(config['proxy']['type'])
+use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
+sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 
 pid=os.fork()
 
