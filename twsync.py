@@ -11,7 +11,7 @@ import base64
 import re
 import htmlentitydefs
 import time
-import urllib,urllib2,Cookie
+import urllib,Cookie
 import pycurl
 from StringIO import StringIO
 import logging
