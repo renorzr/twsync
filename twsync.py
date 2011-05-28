@@ -20,6 +20,7 @@ import getpass
 import os
 
 def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
+  b=StringIO()
   while(retry>0):
     retry-=1
     try:
@@ -34,7 +35,6 @@ def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
         c.setopt(pycurl.POSTFIELDS,post)
       if headers:
         c.setopt(pycurl.HTTPHEADER,headers)
-      b=StringIO()
       c.setopt(c.WRITEFUNCTION,b.write)
       c.perform()
       retry=0
