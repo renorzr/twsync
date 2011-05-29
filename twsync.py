@@ -18,32 +18,8 @@ import logging
 import yaml
 import getpass
 import os
-
-def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
-  b=StringIO()
-  while(retry>0):
-    retry-=1
-    try:
-      c=pycurl.Curl()
-      c.setopt(pycurl.URL,url)
-      if proxy:
-        c.setopt(pycurl.PROXY,proxy['host'])
-        c.setopt(pycurl.PROXYPORT,proxy['port'])
-        c.setopt(pycurl.PROXYTYPE,proxy['type'])
-      if post:
-        c.setopt(pycurl.POST,1)
-        c.setopt(pycurl.POSTFIELDS,post)
-      if headers:
-        c.setopt(pycurl.HTTPHEADER,headers)
-      c.setopt(c.WRITEFUNCTION,b.write)
-      c.perform()
-      retry=0
-    except:
-      logging.debug("retry %d more"%retry)
-
-    time.sleep(1)
-
-  return {'status_code':c.getinfo(pycurl.HTTP_CODE),'content':b.getvalue()}
+import searchhtml
+import httphelp
 
 def make_cookie_header(cookie):
     ret = ""
@@ -101,17 +77,43 @@ def putLatest(id):
     f.write(id)
     f.close
 
+def getImageUrl(msg):
+    url=None
+    m=re.search("http:\/\/picplz.com\/\w+",msg)
+    if m:
+      url=m.group(0)
+      content=url_fetch(url)
+      url=searchhtml.picplzImage(content)
+    else:
+      m=re.search("\[pic\](http:\/\/[^s]+)",msg)
+      url=m and m.group(1)
+
+    return url
+
+def getImage(msg):
+    if getImageUrl(msg):
+      return url_fetch(url)
+    return None
+
 def send_sina_msgs(username,password,msg):
     logging.info("send_sina_msgs: "+msg)
     auth=base64.b64encode(username+":"+password)
     auth='Basic '+auth
+    up='update'
+#    image=getImage(msg)
+#    if image:
+#      up='upload'
     msg=unescape(msg)
     form_fields = {
       "status": msg,
+#      "pic":image
     }
     form_data = urllib.urlencode(form_fields)
     proxy=config['twitter']['use_proxy'] and sync_proxy
-    result = url_fetch("http://api.t.sina.com.cn/statuses/update.xml?source="+sina_appkey,
+    url="http://api.t.sina.com.cn/statuses/%s.xml?source=%s"%(up,sina_appkey),
+    print 'url=',url
+    result = url_fetch(
+      url,
       proxy=proxy,
       post=form_data,
       headers=['Authorization: '+auth]
