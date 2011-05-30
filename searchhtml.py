@@ -9,11 +9,16 @@ class MyParser(sgmllib.SGMLParser):
     sgmllib.SGMLParser.__init__(self,verbose)
     self.url=None
 
-  def start_img(self,attributes):
-    for name,value in attributes:
+  def start_img(self,attr):
+    found=False
+    for name,value in attr:
       if name=="id" and value=="mainImage":
-        self.url=attributes.get("src")
-        return
+        found=True
+      elif name=="src":
+        self.url=value
+    if found:
+      self.setnomoretags()
+      return
 
 def picplzImage(content):
   parser=MyParser()

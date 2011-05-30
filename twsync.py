@@ -13,13 +13,13 @@ import htmlentitydefs
 import time
 import urllib,Cookie
 import pycurl
-from StringIO import StringIO
 import logging
 import yaml
 import getpass
 import os
 import searchhtml
-import httphelp
+from httphelp import url_fetch
+from httphelp import pic_multiple_body
 
 def make_cookie_header(cookie):
     ret = ""
@@ -82,7 +82,7 @@ def getImageUrl(msg):
     m=re.search("http:\/\/picplz.com\/\w+",msg)
     if m:
       url=m.group(0)
-      content=url_fetch(url)
+      content=url_fetch(url)['content']
       url=searchhtml.picplzImage(content)
     else:
       m=re.search("\[pic\](http:\/\/[^s]+)",msg)
@@ -91,27 +91,27 @@ def getImageUrl(msg):
     return url
 
 def getImage(msg):
-    if getImageUrl(msg):
-      return url_fetch(url)
+    url=getImageUrl(msg)
+    if url:
+      return url_fetch(url)['content']
     return None
 
 def send_sina_msgs(username,password,msg):
     logging.info("send_sina_msgs: "+msg)
     auth=base64.b64encode(username+":"+password)
     auth='Basic '+auth
-    up='update'
-#    image=getImage(msg)
-#    if image:
-#      up='upload'
+    image=getImage(msg)
     msg=unescape(msg)
-    form_fields = {
-      "status": msg,
-#      "pic":image
-    }
-    form_data = urllib.urlencode(form_fields)
+    if image:
+      f=file('pic.tmp','w')
+      f.write(image)
+      f.close()
+      cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
+      os.system(cmd)
+      return True
+
     proxy=config['twitter']['use_proxy'] and sync_proxy
-    url="http://api.t.sina.com.cn/statuses/%s.xml?source=%s"%(up,sina_appkey),
-    print 'url=',url
+    url="http://api.t.sina.com.cn/statuses/update.xml?source="+sina_appkey
     result = url_fetch(
       url,
       proxy=proxy,
