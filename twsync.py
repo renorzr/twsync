@@ -115,7 +115,7 @@ def send_sina_msgs(username,password,msg):
     result = url_fetch(
       url,
       proxy=proxy,
-      post=form_data,
+      post=urllib.urlencode({'status':msg}),
       headers=['Authorization: '+auth]
       )
     if result['status_code'] == 200:
