@@ -107,8 +107,7 @@ def send_sina_msgs(username,password,msg):
       f.write(image)
       f.close()
       cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
-      os.system(cmd)
-      return True
+      return os.system(cmd)==0:
 
     proxy=config['twitter']['use_proxy'] and sync_proxy
     url="http://api.t.sina.com.cn/statuses/update.xml?source="+sina_appkey
