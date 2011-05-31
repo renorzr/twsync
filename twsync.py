@@ -79,11 +79,11 @@ def putLatest(id):
 
 def getImageUrl(msg):
     url=None
-    m=re.search("http:\/\/picplz.com\/\w+",msg)
+    m=re.search("http:\/\/((flic\.kr|instagr.am)\/p|picplz\.com)\/\w+",msg)
     if m:
       url=m.group(0)
       content=url_fetch(url)['content']
-      url=searchhtml.picplzImage(content)
+      url=searchhtml.searchImage(url,content)
     else:
       m=re.search("\[pic\](http:\/\/[^s]+)",msg)
       url=m and m.group(1)

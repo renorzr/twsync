@@ -1,7 +1,15 @@
 import sgmllib
 
 class MyParser(sgmllib.SGMLParser):
-  def parse(self,s):
+  def parse(self,url,s):
+    self.site=None
+    if url.find('picplz.com')!=-1:
+      self.site='picplz'
+    elif url.find('flic.kr')!=-1:
+      self.site='flickr'
+    elif url.find('instagr.am')!=-1:
+      self.site='instagram'
+
     self.feed(s)
     self.close()
 
@@ -12,7 +20,9 @@ class MyParser(sgmllib.SGMLParser):
   def start_img(self,attr):
     found=False
     for name,value in attr:
-      if name=="id" and value=="mainImage":
+      if (self.site=='picplz' and name=="id" and value=="mainImage") or
+         (self.site=='instagram' and name=="class" and value=="photo") or
+         (self.site=='flickr' and name=="alt" and value=="photo"):
         found=True
       elif name=="src":
         self.url=value
@@ -20,7 +30,7 @@ class MyParser(sgmllib.SGMLParser):
       self.setnomoretags()
       return
 
-def picplzImage(content):
+def searchImage(url, content):
   parser=MyParser()
-  parser.parse(content)
+  parser.parse(url,content)
   return parser.url
