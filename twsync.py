@@ -20,6 +20,7 @@ import os
 import searchhtml
 from httphelp import url_fetch
 from httphelp import pic_multiple_body
+from sinaclient import SinaClient
 
 def make_cookie_header(cookie):
     ret = ""
@@ -79,7 +80,7 @@ def putLatest(id):
 
 def getImageUrl(msg):
     url=None
-    m=re.search("http:\/\/((flic\.kr|instagr.am)\/p|picplz\.com)\/\w+",msg)
+    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com)\/\w+",msg)
     if m:
       url=m.group(0)
       content=url_fetch(url)['content']
@@ -96,36 +97,18 @@ def getImage(msg):
       return url_fetch(url)['content']
     return None
 
-def send_sina_msgs(username,password,msg):
+def send_sina_msgs(msg):
     logging.info("send_sina_msgs: "+msg)
-    auth=base64.b64encode(username+":"+password)
-    auth='Basic '+auth
-    image=getImage(msg)
     msg=unescape(msg)
-    if image:
-      f=file('pic.tmp','w')
-      f.write(image)
-      f.close()
-      cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
-      return os.system(cmd)==0:
+#    if image:
+#      f=file('pic.tmp','w')
+#      f.write(image)
+#      f.close()
+#      cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
+#      return os.system(cmd)==0:
 
-    proxy=config['twitter']['use_proxy'] and sync_proxy
-    url="http://api.t.sina.com.cn/statuses/update.xml?source="+sina_appkey
-    result = url_fetch(
-      url,
-      proxy=proxy,
-      post=urllib.urlencode({'status':msg}),
-      headers=['Authorization: '+auth]
-      )
-    if result['status_code'] == 200:
-        bk=result['content']
-        logging.debug("sina returned")
-        if bk.find("true"):
-            logging.info("sina updated")
-            return True
-    else:
-        logging.warning("sina update failed (code:%d) {%s}"%(result['status_code'],result['content']))
-    return False
+    proxy=config['sina']['use_proxy'] and sync_proxy
+    return sina.send_msg(msg)['status_code']=='200'
 
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):
@@ -143,7 +126,7 @@ def parseTwitter(twitter_id,since_id="",):
             text=x[1]
             if text[1]!='@':
                 logging.info('sync (%s) %s'%(id,text))
-                if send_sina_msgs(config['sina']['username'],sina_pwd,text):
+                if send_sina_msgs(text):
                     putLatest(id)
                     time.sleep(1)
             else:
@@ -151,6 +134,24 @@ def parseTwitter(twitter_id,since_id="",):
     else:
         logging.warning("get twitter data error:\n"+result['content'])
         
+def save_access_token(token):
+  f=file('token','w')
+  f.write(token)
+  f.close()
+
+def read_access_token():
+  try:
+    f=file('token','r')
+    t=f.read()
+    f.close()
+    return t
+  except:
+    return False
+
+def sync_once():
+  latest=getLatest() 
+  parseTwitter(twitter_id=config['twitter']['username'],since_id=latest)
+
 ####################
 # main starts here
 ####################
@@ -158,23 +159,31 @@ logging.basicConfig(filename='twsync.log',level=logging.DEBUG)
 f=file('config.yaml','r')
 config=yaml.load(f.read())
 f.close()
-sina_pwd=getpass.getpass('input sina password to start:')
-sina_appkey=config['sina']['appkey']
-if not sina_pwd:
-  print 'need sina password to update'
-  exit()
 
 sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 
-pid=os.fork()
+sina=SinaClient(config['sina']['key'],config['sina']['secret'])
+token=read_access_token()
+if not token:
+  url=sina.get_auth_url()
+  verifier=raw_input('goto '+url+' get pin code:')
+  sina.set_verifier(verifier)
+  token=sina.get_access_token()
+  save_access_token(token)
 
-if pid:
-  print 'start sync daemon'
+sina.set_access_token(token)
+
+if len(sys.argv)>1 and sys.argv[1]=='-d':
+  pid=os.fork()
+  
+  if pid:
+    print 'start sync daemon'
+  else:
+    print 'sync daemon started'
+    while True:
+      sync_once()
+      time.sleep(300)
 else:
-  print 'sync daemon started'
-  while True:
-    latest=getLatest() 
-    parseTwitter(twitter_id=config['twitter']['username'],since_id=latest)
-    time.sleep(300)
+  sync_once()
