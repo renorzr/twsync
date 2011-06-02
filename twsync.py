@@ -108,7 +108,8 @@ def send_sina_msgs(msg):
 #      return os.system(cmd)==0:
 
     proxy=config['sina']['use_proxy'] and sync_proxy
-    return sina.send_msg(msg)['status_code']=='200'
+    result=sina.send_msg(msg)
+    return result['status_code']==200
 
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):
