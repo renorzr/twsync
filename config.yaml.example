@@ -1,0 +1,3 @@
+proxy: {host: 'localhost', port: 7070, type: 'socks5'}
+sina: {key: 'YOUR_SINA_APP_KEY', secret: 'YOUR_SINA_APP_SECRET',  use_proxy: false}
+twitter: {use_proxy: false, username: 'YOUR_TWITTER_USERNAME'}
