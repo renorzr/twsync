@@ -42,10 +42,6 @@ CALLBACK_URL = ''
 SINA_USER_TIMELINE_URL = 'http://api.t.sina.com.cn/statuses/user_timeline.json'
 SINA_UPDATE_URL = 'http://api.t.sina.com.cn/statuses/update.json'
 
-# key and secret granted by the service provider for this consumer application - same as the MockOAuthDataStore
-CONSUMER_KEY = '792169767'
-CONSUMER_SECRET = '62928e39eed71eb8544eb57e7ce9c39d'
-
 # example client using httplib with headers
 class SimpleOAuthClient(oauth.OAuthClient):
 
