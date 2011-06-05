@@ -7,12 +7,9 @@ default_encoding = 'utf-8'
 if sys.getdefaultencoding() != default_encoding:
     reload(sys)
     sys.setdefaultencoding(default_encoding)
-import base64
 import re
 import htmlentitydefs
 import time
-import urllib,Cookie
-import pycurl
 import logging
 import yaml
 import getpass
@@ -107,9 +104,7 @@ def send_sina_msgs(msg):
 #      cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
 #      return os.system(cmd)==0:
 
-    proxy=config['sina']['use_proxy'] and sync_proxy
-    result=sina.send_msg(msg)
-    return result['status_code']==200
+    return sina.send_msg(msg)
 
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):
