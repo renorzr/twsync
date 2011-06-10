@@ -23,7 +23,7 @@ class SinaClient:
 
     def send_msg(self,msg):
         msg=msg.encode('utf-8')
-        status=self.api.upload(status=msg)
+        status=self.api.update_status(status=msg)
         return True
 
     def send_pic(self,msg,pic):

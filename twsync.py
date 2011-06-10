@@ -15,6 +15,7 @@ import yaml
 import getpass
 import os
 import searchhtml
+import pycurl
 from httphelp import url_fetch
 from httphelp import pic_multiple_body
 from sinaclient import SinaClient
@@ -182,4 +183,5 @@ if len(sys.argv)>1 and sys.argv[1]=='-d':
       sync_once()
       time.sleep(300)
 else:
+  print 'sync once'
   sync_once()
