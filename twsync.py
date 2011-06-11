@@ -78,7 +78,7 @@ def putLatest(id):
 
 def getImageUrl(msg):
     url=None
-    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com)\/\w+",msg)
+    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com)\/\w+",msg)
     if m:
       url=m.group(0)
       content=url_fetch(url)['content']
@@ -133,7 +133,7 @@ def parseTwitter(twitter_id,since_id="",):
             else:
                 logging.debug('ignore (%s) %s'%(id,text))
     else:
-        logging.warning("get twitter data error:\n"+result['content'])
+        logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
         
 def save_access_token(token):
   f=file('token','w')

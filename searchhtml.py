@@ -9,6 +9,8 @@ class MyParser(sgmllib.SGMLParser):
       self.site='flickr'
     elif url.find('instagr.am')!=-1:
       self.site='instagram'
+    elif url.find('4sq.com')!=-1:
+      self.site='4sq'
 
     self.feed(s)
     self.close()
@@ -20,7 +22,7 @@ class MyParser(sgmllib.SGMLParser):
   def start_img(self,attr):
     found=False
     for name,value in attr:
-      if (self.site=='picplz' and name=="id" and value=="mainImage") or(self.site=='instagram' and name=="class" and value=="photo") or (self.site=='flickr' and name=="alt" and value=="photo"):
+      if (self.site=='picplz' and name=="id" and value=="mainImage") or(self.site=='instagram' and name=="class" and value=="photo") or (self.site=='flickr' and name=="alt" and value=="photo") or (self.site=='4sq' and name=="class" and value=="mainPhoto"):
         found=True
       elif name=="src":
         self.url=value
