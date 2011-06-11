@@ -96,16 +96,20 @@ def getImage(msg):
     return None
 
 def send_sina_msgs(msg):
-    logging.info("send_sina_msgs: "+msg)
-    msg=unescape(msg)
-#    if image:
-#      f=file('pic.tmp','w')
-#      f.write(image)
-#      f.close()
-#      cmd='curl -u "%s:%s" -F "pic=@pic.tmp" -F "status=%s" "http://api.t.sina.com.cn/statuses/upload.json?source=%s"'%(username,password,msg,sina_appkey)
-#      return os.system(cmd)==0:
-
-    return sina.send_msg(msg)
+    try:
+      logging.info("send_sina_msgs: "+msg)
+      image=getImage(msg)
+      msg=unescape(msg)
+      if image:
+        f=file('temp.jpg','w')
+        f.write(image)
+        f.close()
+        return sina.send_pic(msg,'temp.jpg')
+  
+      return sina.send_msg(msg)
+    except:
+      logging.error(str(sys.exc_info()))
+      return False
 
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):

@@ -3,5 +3,6 @@
 *.yaml
 *.pyc
 *.tmp
+temp*
 latest
 token

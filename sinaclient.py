@@ -24,14 +24,13 @@ class SinaClient:
     def send_msg(self,msg):
         msg=msg.encode('utf-8')
         status=self.api.update_status(status=msg)
-        return True
+        return status
 
     def send_pic(self,msg,pic):
         msg=msg.encode('utf-8')
         status=self.api.upload(pic,status=msg)
-        print status
         
-        return True
+        return status
 
     def get_timeline(self):
         return self.request(SINA_USER_TIMELINE_URL)
