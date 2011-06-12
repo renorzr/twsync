@@ -63,20 +63,6 @@ def unescape(text):
        return text # leave as is
    return re.sub("&#?\w+;", fixup, text)
 
-def getLatest():
-  try:
-    f=file('latest','r')
-    l=f.readline()
-    f.close()
-    return l
-  except:
-    return None
-
-def putLatest(id):
-    f=file('latest','w')
-    f.write(id)
-    f.close
-
 def getImageUrl(msg):
     url=None
     m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com)\/\w+",msg)
@@ -124,6 +110,7 @@ def parseTwitter(twitter_id,since_id="",):
     if result['status_code'] == 200:
         content=result['content']
         tweets=json.loads(content)
+        lastid=None
         for t in reversed(tweets):
             id=t['id_str']
             text=t['text']
@@ -132,10 +119,11 @@ def parseTwitter(twitter_id,since_id="",):
             if text[0]!='@':
                 logging.info('sync (%s) %s'%(id,text))
                 if send_sina_msgs(text,coord):
-                    putLatest(id)
+                    lastid=id
                     time.sleep(1)
             else:
                 logging.debug('ignore (%s) %s'%(id,text))
+        return lastid
     else:
         logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
         
@@ -154,8 +142,22 @@ def read_access_token():
     return False
 
 def sync_once():
-  latest=getLatest() 
-  parseTwitter(twitter_id=config['twitter']['username'],since_id=latest)
+  f=file('users.yaml','r')
+  users=yaml.load(f.read())
+  f.close()
+  synced=0
+  for username in users:
+    user=users[username]
+    sina.set_access_token(user['sina_token'])
+    id=parseTwitter(twitter_id=username,since_id=user['last_tweet'])
+    if (id):
+      users[username]['last_tweet']=id
+      synced+=1
+
+  if synced>0:
+    f=file('users.yaml','w')
+    f.write(yaml.dump(users))
+    f.close()
 
 ####################
 # main starts here
@@ -168,17 +170,7 @@ f.close()
 sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
-
 sina=SinaClient(config['sina']['key'],config['sina']['secret'])
-token=read_access_token()
-if not token:
-  url=sina.get_auth_url()
-  verifier=raw_input('goto '+url+' get pin code:')
-  sina.set_verifier(verifier)
-  token=sina.get_access_token()
-  save_access_token(token)
-
-sina.set_access_token(token)
 
 if len(sys.argv)>1 and sys.argv[1]=='-d':
   pid=os.fork()
