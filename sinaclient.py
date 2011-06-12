@@ -41,4 +41,4 @@ class SinaClient:
         if not coord:
           return (None,None)
 
-        return coord
+        return map(lambda x:str(x),coord)

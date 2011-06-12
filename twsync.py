@@ -65,8 +65,10 @@ def getImageUrl(msg):
     url=None
     m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com)\/\w+",msg)
     if m:
-      url=m.group(0)
-      content=url_fetch(url)['content']
+      url=str(m.group(0))
+      r=url_fetch(url)
+      content=r['content']
+      logging.info('imagepage:'+url+' status_code:'+str(r['status_code']))
       url=searchhtml.searchImage(url,content)
     else:
       m=re.search("\[pic\](http:\/\/[^s]+)",msg)
@@ -83,9 +85,10 @@ def getImage(msg):
 def send_sina_msgs(msg,coord=None):
     try:
       logging.info("send_sina_msgs: "+msg)
-      image=getImage(msg)
       msg=unescape(msg)
+      image=getImage(msg)
       if image:
+        logging.info('send pic')
         f=file('temp.jpg','w')
         f.write(image)
         f.close()
