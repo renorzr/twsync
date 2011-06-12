@@ -19,6 +19,7 @@ import pycurl
 from httphelp import url_fetch
 from httphelp import pic_multiple_body
 from sinaclient import SinaClient
+import json
 
 def make_cookie_header(cookie):
     ret = ""
@@ -95,7 +96,7 @@ def getImage(msg):
       return url_fetch(url)['content']
     return None
 
-def send_sina_msgs(msg):
+def send_sina_msgs(msg,coord=None):
     try:
       logging.info("send_sina_msgs: "+msg)
       image=getImage(msg)
@@ -104,30 +105,33 @@ def send_sina_msgs(msg):
         f=file('temp.jpg','w')
         f.write(image)
         f.close()
-        return sina.send_pic(msg,'temp.jpg')
+        return sina.send_pic(msg,'temp.jpg',coord)
   
-      return sina.send_msg(msg)
+      return sina.send_msg(msg,coord)
     except:
-      logging.error(str(sys.exc_info()))
+      exc=sys.exc_info()
+      logging.error(exc[0]+' '+exc[1]+' '+exc[2].format_exc)
       return False
 
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):
     if since_id:
-        url="http://twitter.com/statuses/user_timeline/%s.xml?since_id=%s"%(twitter_id,since_id)
+        url="http://twitter.com/statuses/user_timeline/%s.json?since_id=%s"%(twitter_id,since_id)
     else:
-        url="http://twitter.com/statuses/user_timeline/%s.xml"%(twitter_id)
+        url="http://twitter.com/statuses/user_timeline/%s.json"%(twitter_id)
     proxy=config['twitter']['use_proxy'] and sync_proxy
     result = url_fetch(url,proxy=proxy)
     if result['status_code'] == 200:
         content=result['content']
-        m= re.findall(r"(?i)<id>([^<]+)</id>\s*<text>(?!@)([^<]+)</text>", content)
-        for x in reversed(m):
-            id=x[0]
-            text=x[1]
-            if text[1]!='@':
+        tweets=json.loads(content)
+        for t in reversed(tweets):
+            id=t['id_str']
+            text=t['text']
+            geo=t['geo']
+            coord=geo and geo['coordinates']
+            if text[0]!='@':
                 logging.info('sync (%s) %s'%(id,text))
-                if send_sina_msgs(text):
+                if send_sina_msgs(text,coord):
                     putLatest(id)
                     time.sleep(1)
             else:

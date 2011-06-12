@@ -21,16 +21,24 @@ class SinaClient:
         self.auth.get_access_token(verifier)
         self.api=API(self.auth)
 
-    def send_msg(self,msg):
+    def send_msg(self,msg,coord=None):
+        lat,long=self.get_lat_long(coord)
         msg=msg.encode('utf-8')
-        status=self.api.update_status(status=msg)
+        status=self.api.update_status(status=msg,lat=lat,long=long)
         return status
 
-    def send_pic(self,msg,pic):
+    def send_pic(self,msg,pic,coord=None):
+        lat,long=self.get_lat_long(coord)
         msg=msg.encode('utf-8')
-        status=self.api.upload(pic,status=msg)
+        status=self.api.upload(pic,status=msg,lat=lat,long=long)
         
         return status
 
     def get_timeline(self):
         return self.request(SINA_USER_TIMELINE_URL)
+
+    def get_lat_long(self,coord):
+        if not coord:
+          return (None,None)
+
+        return coord
