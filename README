@@ -1,13 +1,13 @@
 PREREQUISITE
 1. register as sina weibo developer and get your app key
-2. Python 2.5 and above installed
+2. Python 2.6 or above installed
 3. required python libs: PyYAML, pycurl
 
 USAGE
 1. put all files in a folder
-2. edit config.yaml.example setup twitter user, app key/secret, proxy, etc.
+2. edit config.yaml.example setup app key/secret, proxy, etc.
 3. save config.yaml.example as config.yaml
-4. run command: python twsync.py -d
-5. follow the instruction to get and input sina PIN code
+4. To add sync accounts, run command: python users.py add <twitter-username>
+5. Start sync daemon, run command: python twsync.py -d
 6. your weibo is now synced with twitter
-
+7. run python users.py to manage users in the future.

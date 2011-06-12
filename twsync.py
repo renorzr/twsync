@@ -12,12 +12,10 @@ import htmlentitydefs
 import time
 import logging
 import yaml
-import getpass
 import os
 import searchhtml
 import pycurl
 from httphelp import url_fetch
-from httphelp import pic_multiple_body
 from sinaclient import SinaClient
 import json
 
@@ -128,20 +126,6 @@ def parseTwitter(twitter_id,since_id="",):
     else:
         logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
         
-def save_access_token(token):
-  f=file('token','w')
-  f.write(token)
-  f.close()
-
-def read_access_token():
-  try:
-    f=file('token','r')
-    t=f.read()
-    f.close()
-    return t
-  except:
-    return False
-
 def sync_once():
   f=file('users.yaml','r')
   users=yaml.load(f.read())
