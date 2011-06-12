@@ -96,7 +96,8 @@ def send_sina_msgs(msg,coord=None):
       return sina.send_msg(msg,coord)
     except:
       exc=sys.exc_info()
-      logging.error(exc[0]+' '+exc[1]+' '+exc[2].format_exc)
+      logging.error(exc[1].__str__())
+      logging.error(str(exc))
       return False
 
 #get one page of to user's replies, 20 messages at most. 
@@ -112,7 +113,7 @@ def parseTwitter(twitter_id,since_id="",):
         tweets=json.loads(content)
         lastid=None
         for t in reversed(tweets):
-            id=t['id_str']
+            id=str(t['id'])
             text=t['text']
             geo=t['geo']
             coord=geo and geo['coordinates']
