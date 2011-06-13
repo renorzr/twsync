@@ -46,6 +46,8 @@ add <username>     : add a user
 rm <username>      : remove user
 mv <user1> <user2> : rename user1 to user2
 ls                 : list all users
+
+Note: username should be the same with twitter username.
 """
 
 def load_users():
@@ -61,7 +63,7 @@ def load_users():
 def save_users(users):
   try:
     f=file('users.yaml','w')
-    f.write(yaml.dump(users))
+    yaml.dump(users,stream=f)
     f.close()
     return True
   except:
