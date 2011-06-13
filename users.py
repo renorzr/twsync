@@ -4,6 +4,9 @@ from sinaclient import SinaClient
 
 def add(username):
   users=load_users()
+  if (users.has_key(username)):
+    print 'user '+username+' exists'
+    return
   sina=SinaClient(config['sina']['key'],config['sina']['secret'])
   url=sina.get_auth_url()
   verifier=raw_input('goto '+url+' get pin code:')
@@ -17,18 +20,33 @@ def rm(username):
   users=load_users()
   if (users.has_key(username)):
     del(users[username])
+  else:
+    print 'user '+username+" doesn't exist"
   save_users(users)
 
 def ls():
   users=load_users()
   print "\n".join(users.keys())
 
+def mv(u1,u2):
+  users=load_users()
+  if users.has_key(u2):
+    print 'user '+u2+' exists'
+    return
+  if not users.has_key(u1):
+    print 'user '+u1+' does\'nt exist'
+    return
+  users[u2]=users[u1]
+  del(users[u1])
+
 def help():
-  print 'usage: python users {add|rm|ls} arg'
-  print 'options:'
-  print 'add username  : add a user'
-  print 'rm username   : remove user'
-  print 'ls            : list all users'
+  print """Usage: python users.py options args
+options:
+add <username>     : add a user
+rm <username>      : remove user
+mv <user1> <user2> : rename user1 to user2
+ls                 : list all users
+"""
 
 def load_users():
   users={}
@@ -70,5 +88,11 @@ elif option=='rm':
     help()
 elif option=='ls':
   ls()
+elif option=='mv':
+  u1,u2=len(sys.argv)>3 and sys.argv[2:4] or (None,None)
+  if u1 and u2:
+    mv(u1,u2)
+  else:
+    help()
 else:
   help()

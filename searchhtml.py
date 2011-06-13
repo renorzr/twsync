@@ -17,10 +17,10 @@ class MyParser(sgmllib.SGMLParser):
 
   def __init__(self,verbose=0):
     sgmllib.SGMLParser.__init__(self,verbose)
-    self.url=None
 
   def start_img(self,attr):
     found=False
+    self.url=None
     for name,value in attr:
       if (self.site=='picplz' and name=="id" and value=="mainImage") or(self.site=='instagram' and name=="class" and value=="photo") or (self.site=='flickr' and name=="alt" and value=="photo") or (self.site=='4sq' and name=="class" and value=="mainPhoto"):
         found=True
