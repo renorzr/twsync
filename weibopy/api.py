@@ -3,7 +3,7 @@
 # See LICENSE for details.
 
 import os
-import mimetypes
+from filetypes import guess_file_type
 
 from weibopy.binder import bind_api
 from weibopy.error import WeibopError
@@ -750,15 +750,18 @@ class API(object):
             raise WeibopError('Unable to access file')
 
         # image must be gif, jpeg, or png
-        file_type = mimetypes.guess_type(filename)
-        if file_type is None:
-            raise WeibopError('Could not determine file type')
-        file_type = file_type[0]
-        if file_type not in ['image/gif', 'image/jpeg', 'image/png']:
-            raise WeibopError('Invalid file type for image: %s' % file_type)
+#        file_type = mimetypes.guess_type(filename)
+#        if file_type is None:
+#            raise WeibopError('Could not determine file type')
+#        file_type = file_type[0]
+#        if file_type not in ['image/gif', 'image/jpeg', 'image/png']:
+#            raise WeibopError('Invalid file type for image: %s' % file_type)
 
         # build the mulitpart-formdata body
         fp = open(filename, 'rb')
+        data=fp.read()
+        fp.close()        
+        file_type=guess_file_type(data)
         BOUNDARY = 'Tw3ePy'
         body = []
         if status is not None:            
@@ -794,10 +797,9 @@ class API(object):
         body.append('Content-Type: %s' % file_type)
         body.append('Content-Transfer-Encoding: binary')
         body.append('')
-        body.append(fp.read())
+        body.append(data)
         body.append('--' + BOUNDARY + '--')
         body.append('')
-        fp.close()        
         body.append('--' + BOUNDARY + '--')
         body.append('')
         body = '\r\n'.join(body)
