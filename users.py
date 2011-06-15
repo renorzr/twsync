@@ -12,7 +12,7 @@ def add(username):
   verifier=raw_input('goto '+url+' get pin code:')
   sina.set_verifier(verifier)
   token=sina.get_access_token()
-  users[username]={'sina_token':token,'last_tweet':None}
+  users[username]={'sina_token':token,'last_tweet':None,'activated':True}
   if not save_users(users):
     print 'add user failed'
 
@@ -26,7 +26,7 @@ def rm(username):
 
 def ls():
   users=load_users()
-  print "\n".join(users.keys())
+  print "\n".join(map(lambda u:u+"\t"+(users[u].get('activated') and 'active' or 'non-active'),users))
 
 def mv(u1,u2):
   users=load_users()
@@ -39,13 +39,23 @@ def mv(u1,u2):
   users[u2]=users[u1]
   del(users[u1])
 
+def act(username,active):
+  users=load_users()
+  if (users.has_key(username)):
+    users[username]['activated']=active
+  else:
+    print 'user '+username+" doesn't exist"
+  save_users(users)
+  
+
 def help():
   print """Usage: python users.py options args
 options:
-add <username>     : add a user
-rm <username>      : remove user
-mv <user1> <user2> : rename user1 to user2
-ls                 : list all users
+add <username>       : add a user
+rm <username>        : remove user
+mv <user1> <user2>   : rename user1 as user2
+act <username> <1|0> : activate(1) or deactivate(0) a user
+ls                   : list all users
 
 Note: username should be the same with twitter username.
 """
@@ -86,6 +96,13 @@ elif option=='rm':
   username=len(sys.argv)>2 and sys.argv[2]
   if username:
     rm(username)
+  else:
+    help()
+elif option=='act':
+  username=len(sys.argv)>2 and sys.argv[2]
+  active=len(sys.argv)==4 and sys.argv[3]
+  if username and active:
+    act(username,active=='1')
   else:
     help()
 elif option=='ls':

@@ -136,11 +136,12 @@ def sync_once():
   synced=0
   for username in users:
     user=users[username]
-    sina.set_access_token(user['sina_token'])
-    id=parseTwitter(twitter_id=username,since_id=user['last_tweet'])
-    if (id):
-      users[username]['last_tweet']=id
-      synced+=1
+    if user['activated']:
+      sina.set_access_token(user['sina_token'])
+      id=parseTwitter(twitter_id=username,since_id=user['last_tweet'])
+      if (id):
+        users[username]['last_tweet']=id
+        synced+=1
 
   if synced>0:
     f=file('users.yaml','w')
@@ -159,7 +160,7 @@ sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 sina=SinaClient(config['sina']['key'],config['sina']['secret'])
-sync_interval=config.has_key('sync_interval') and config['sync_interval'] or 300
+sync_interval=config.get('sync_interval') or 300
 
 if len(sys.argv)>1 and sys.argv[1]=='-d':
   pid=os.fork()
