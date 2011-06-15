@@ -144,7 +144,7 @@ def sync_once():
 
   if synced>0:
     f=file('users.yaml','w')
-    f.write(yaml.dump(users))
+    yaml.dump(users,stream=f)
     f.close()
 
 ####################
@@ -159,6 +159,7 @@ sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 sina=SinaClient(config['sina']['key'],config['sina']['secret'])
+sync_interval=config['sync_interval'] or 300
 
 if len(sys.argv)>1 and sys.argv[1]=='-d':
   pid=os.fork()
@@ -169,7 +170,7 @@ if len(sys.argv)>1 and sys.argv[1]=='-d':
     print 'sync daemon started'
     while True:
       sync_once()
-      time.sleep(300)
+      time.sleep(sync_interval)
 else:
   print 'sync once'
   sync_once()
