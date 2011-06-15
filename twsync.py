@@ -159,7 +159,7 @@ sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 sina=SinaClient(config['sina']['key'],config['sina']['secret'])
-sync_interval=config['sync_interval'] or 300
+sync_interval=config.has_key('sync_interval') and config['sync_interval'] or 300
 
 if len(sys.argv)>1 and sys.argv[1]=='-d':
   pid=os.fork()
