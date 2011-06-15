@@ -63,7 +63,7 @@ def unescape(text):
 
 def getImageUrl(msg):
     url=None
-    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com)\/\w+",msg)
+    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com|twitpic.com)\/\w+",msg)
     if m:
       url=str(m.group(0))
       r=url_fetch(url)
