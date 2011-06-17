@@ -13,6 +13,7 @@ import time
 import logging
 import yaml
 import os
+import signal
 import searchhtml
 import pycurl
 from httphelp import url_fetch
@@ -89,10 +90,7 @@ def send_sina_msgs(msg,coord=None):
       image=getImage(msg)
       if image:
         logging.info('send pic')
-        f=file('temp.jpg','w')
-        f.write(image)
-        f.close()
-        return sina.send_pic(msg,'temp.jpg',coord)
+        return sina.send_pic(msg,image,coord)
   
       return sina.send_msg(msg,coord)
     except:
@@ -130,23 +128,76 @@ def parseTwitter(twitter_id,since_id="",):
         logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
         
 def sync_once():
-  f=file('users.yaml','r')
-  users=yaml.load(f.read())
-  f.close()
+  users=load_users()
   synced=0
   for username in users:
     user=users[username]
     if user['activated']:
-      sina.set_access_token(user['sina_token'])
-      id=parseTwitter(twitter_id=username,since_id=user['last_tweet'])
+      id=sync_user(username,user)
       if (id):
         users[username]['last_tweet']=id
         synced+=1
 
   if synced>0:
-    f=file('users.yaml','w')
-    yaml.dump(users,stream=f)
+    save_users(users)
+
+def sync_user(username,user):
+  sina.set_access_token(user['sina_token'])
+  return parseTwitter(twitter_id=username,since_id=user['last_tweet'])
+
+def find_user(username):
+  return load_users()[username]
+
+def load_users():
+  f=file('users.yaml','r')
+  users=yaml.load(f.read())
+  f.close()
+  return users
+
+def save_users(users):
+  f=file('users.yaml','w')
+  yaml.dump(users,stream=f)
+  f.close()
+
+def start_daemon():
+  pid=os.fork()
+  if pid:
+    f=file('twsync.pid','w')
+    f.write(str(pid))
     f.close()
+    print 'start sync daemon'
+  else:
+    print 'sync daemon started'
+    while True:
+      sync_once()
+      time.sleep(sync_interval)
+
+def stop_daemon():
+  pid=get_running_daemon()
+  if pid:
+    os.kill(pid,signal.SIGHUP)
+  else:
+    print 'Error: twsync is not started'
+
+def display_help():
+  print 'Usage:'
+  print 'python twsync.py {start|stop|restart}'
+  print 'python twsync.py status'
+  print 'python twsync.py once [username]'
+  print ''
+
+def get_running_daemon():
+  if os.path.exists('twsync.pid'):
+    try:
+      f=file('twsync.pid','r')
+      pid=f.read()
+      f.close()
+      for line in os.popen('ps ax'):
+        if pid==line.split()[0]:
+          return int(pid)
+    except:
+      pass
+  return 0
 
 ####################
 # main starts here
@@ -162,16 +213,33 @@ sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
 sina=SinaClient(config['sina']['key'],config['sina']['secret'])
 sync_interval=config.get('sync_interval') or 300
 
-if len(sys.argv)>1 and sys.argv[1]=='-d':
-  pid=os.fork()
-  
-  if pid:
-    print 'start sync daemon'
+if len(sys.argv)<2:
+  display_help()
+  exit()
+
+if sys.argv[1]=='start':
+  if get_running_daemon():
+    print 'Error: twsync is already started'
   else:
-    print 'sync daemon started'
-    while True:
-      sync_once()
-      time.sleep(sync_interval)
+    start_daemon()
+elif sys.argv[1]=="stop":
+  stop_daemon()
+elif sys.argv[1]=="restart":
+  stop_daemon()
+  start_daemon()
+elif sys.argv[1]=="status":
+  pid=get_running_daemon()
+  if pid:
+    print 'twsync is running (pid:%d)'%pid
+  else:
+    print 'twsync is not running'
+elif sys.argv[1]=="once":
+  if len(sys.argv)>2:
+    username=sys.argv[2]
+    print 'sync user '+username
+    sync_user(username,find_user(username))
+  else:
+    print 'sync once'
+    sync_once()
 else:
-  print 'sync once'
-  sync_once()
+  display_help()

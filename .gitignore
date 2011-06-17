@@ -3,6 +3,7 @@
 *.yaml
 *.pyc
 *.tmp
+*.pid
 temp*
 latest
 token

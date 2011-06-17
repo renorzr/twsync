@@ -170,10 +170,10 @@ class API(object):
         require_auth = True
     )
     """ statuses/upload """
-    def upload(self, filename, status, lat=None, long=None, source=None):
+    def upload(self, data, status, lat=None, long=None, source=None):
         if source is None:
             source=self.source
-        headers, post_data = API._pack_image(filename, 1024, source=source, status=status, lat=lat, long=long, contentname="pic")
+        headers, post_data = API._pack_image(data=data, max_size=1024, source=source, status=status, lat=lat, long=long, contentname="pic")
         args = [status]
         allowed_param = ['status']
         
@@ -403,7 +403,7 @@ class API(object):
 
     """ account/update_profile_background_image """
     def update_profile_background_image(self, filename, *args, **kargs):
-        headers, post_data = API._pack_image(filename, 800)
+        headers, post_data = API._pack_image(filename=filename, max_size=800)
         bind_api(
             path = '/account/update_profile_background_image.json',
             method = 'POST',
@@ -739,28 +739,25 @@ class API(object):
     )
     """ Internal use only """
     @staticmethod
-    def _pack_image(filename, max_size, source=None, status=None, lat=None, long=None, contentname="image"):
+    def _pack_image(filename=None, data=None, max_size=700, source=None, status=None, lat=None, long=None, contentname="image"):
         """Pack image from file into multipart-formdata post body"""
-        # image must be less than 700kb in size
-        try:
+        if not (filename or data):
+          raise WeibopError('image data are not specified')
+        if not data:
+          try:
             if os.path.getsize(filename) > (max_size * 1024):
-                raise WeibopError('File is too big, must be less than 700kb.')
-        #except os.error, e:
-        except os.error:
+                raise WeibopError('File is too big, must be less than %dkb.'%max_size)
+          except os.error:
             raise WeibopError('Unable to access file')
 
-        # image must be gif, jpeg, or png
-#        file_type = mimetypes.guess_type(filename)
-#        if file_type is None:
-#            raise WeibopError('Could not determine file type')
-#        file_type = file_type[0]
-#        if file_type not in ['image/gif', 'image/jpeg', 'image/png']:
-#            raise WeibopError('Invalid file type for image: %s' % file_type)
+          # build the mulitpart-formdata body
+          fp = open(filename, 'rb')
+          data=fp.read()
+          fp.close()        
 
-        # build the mulitpart-formdata body
-        fp = open(filename, 'rb')
-        data=fp.read()
-        fp.close()        
+        if len(data)>max_size*1024:
+          raise WeibopError('File is too big, must be less than %dkb.'%max_size)
+
         file_type=guess_file_type(data)
         BOUNDARY = 'Tw3ePy'
         body = []
