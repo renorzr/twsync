@@ -16,6 +16,7 @@ import os
 import signal
 import searchhtml
 import pycurl
+import traceback
 from httphelp import url_fetch
 from httphelp import getImage
 from sinaclient import SinaClient
@@ -64,7 +65,7 @@ def unescape(text):
    return re.sub("&#?\w+;", fixup, text)
 
 def findUrl(msg):
-    m=re.search("http:\/\/[^s]+",msg)
+    m=re.search("http:\/\/[^\s]+",msg)
     return m and str(m.group(0))
 
 def send_sina_msgs(msg,coord=None):
@@ -81,7 +82,7 @@ def send_sina_msgs(msg,coord=None):
     except:
       exc=sys.exc_info()
       logging.error(exc[1].__str__())
-      logging.error(str(exc))
+      logging.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))
       return False
 
 #get one page of to user's replies, 20 messages at most. 
