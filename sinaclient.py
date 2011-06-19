@@ -42,3 +42,6 @@ class SinaClient:
           return (None,None)
 
         return map(lambda x:str(x),coord)
+
+    def get_user(self):
+        return self.api.verify_credentials()

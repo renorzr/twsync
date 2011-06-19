@@ -118,7 +118,7 @@ def sync_once():
   for username in users:
     user=users[username]
     if user['activated']:
-      id=sync_user(username,user)
+      id=sync_user(user)
       if (id):
         users[username]['last_tweet']=id
         synced+=1
@@ -126,9 +126,9 @@ def sync_once():
   if synced>0:
     save_users(users)
 
-def sync_user(username,user):
+def sync_user(user):
   sina.set_access_token(user['sina_token'])
-  return parseTwitter(twitter_id=username,since_id=user['last_tweet'])
+  return parseTwitter(twitter_id=user['twitter_name'],since_id=user['last_tweet'])
 
 def find_user(username):
   return load_users()[username]
@@ -222,7 +222,7 @@ elif sys.argv[1]=="once":
   if len(sys.argv)>2:
     username=sys.argv[2]
     print 'sync user '+username
-    sync_user(username,find_user(username))
+    sync_user(find_user(username))
   else:
     print 'sync once'
     sync_once()

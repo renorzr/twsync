@@ -2,36 +2,48 @@ import sys
 import yaml
 from sinaclient import SinaClient
 
-def add(username):
+def upgrade():
   users=load_users()
-  if (users.has_key(username)):
-    print 'user '+username+' exists'
-    return
+  new_users={}
+  sina=SinaClient(config['sina']['key'],config['sina']['secret'])
+  for username in users:
+    u=users[username]
+    print 'sina_token:',u['sina_token']
+    sina.set_access_token(u['sina_token'])
+    sinauser=sina.get_user()
+    new_users[sinauser.id]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':username,'sina_token':u['sina_token'],'last_tweet':u['last_tweet'],'activated':u['activated']}
+  save_users(new_users)
+
+def add(twitter_name):
+  users=load_users()
   sina=SinaClient(config['sina']['key'],config['sina']['secret'])
   url=sina.get_auth_url()
   verifier=raw_input('goto '+url+' get pin code:')
   sina.set_verifier(verifier)
   token=sina.get_access_token()
-  users[username]={'sina_token':token,'last_tweet':None,'activated':True}
+  sinauser=sina.get_user()
+  users[sinauser.id]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
   if not save_users(users):
     print 'add user failed'
 
-def rm(username):
+def rm(sina_id):
   users=load_users()
-  if (users.has_key(username)):
-    del(users[username])
+  if (users.has_key(sina_id)):
+    print 'delete user '+format_user(users[sina_id])
+    del(users[sina_id])
   else:
-    print 'user '+username+" doesn't exist"
+    print 'user '+sina_id+" doesn't exist"
   save_users(users)
 
 def ls():
   users=load_users()
-  print "\n".join(map(lambda u:u+"\t"+(users[u].get('activated') and 'active' or 'non-active'),users))
+  print '\n'.join(map(lambda u:format_user(u),users.values()))
 
 def mv(u1,u2):
   users=load_users()
   if users.has_key(u2):
-    print 'user '+u2+' exists'
+    print 'user '+u2+' exists:'
+    print format_user(users[u2])
     return
   if not users.has_key(u1):
     print 'user '+u1+' does\'nt exist'
@@ -47,6 +59,8 @@ def act(username,active):
     print 'user '+username+" doesn't exist"
   save_users(users)
   
+def format_user(u):
+  return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'],u['twitter_name'],(u['activated'] and 'activated' or 'non-activated'))
 
 def help():
   print """Usage: python users.py options args
@@ -113,5 +127,7 @@ elif option=='mv':
     mv(u1,u2)
   else:
     help()
+elif option=='upgrade':
+  upgrade()
 else:
   help()
