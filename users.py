@@ -11,7 +11,7 @@ def upgrade():
     print 'sina_token:',u['sina_token']
     sina.set_access_token(u['sina_token'])
     sinauser=sina.get_user()
-    new_users[sinauser.id]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':username,'sina_token':u['sina_token'],'last_tweet':u['last_tweet'],'activated':u['activated']}
+    new_users[str(sinauser.id)]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':username,'sina_token':u['sina_token'],'last_tweet':u['last_tweet'],'activated':u['activated']}
   save_users(new_users)
 
 def add(twitter_name):
@@ -22,7 +22,7 @@ def add(twitter_name):
   sina.set_verifier(verifier)
   token=sina.get_access_token()
   sinauser=sina.get_user()
-  users[sinauser.id]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
+  users[str(sinauser.id)]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
   if not save_users(users):
     print 'add user failed'
 
@@ -55,6 +55,8 @@ def act(username,active):
   users=load_users()
   if (users.has_key(username)):
     users[username]['activated']=active
+    print 'user %s:'%(active and 'activated' or 'deactivated')
+    print format_user(users[username])
   else:
     print 'user '+username+" doesn't exist"
   save_users(users)
