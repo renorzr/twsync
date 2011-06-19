@@ -9,7 +9,7 @@ def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
     retry-=1
     try:
       c=pycurl.Curl()
-      c.setopt(pycurl.URL,url)
+      c.setopt(pycurl.URL,str(url))
       c.setopt(pycurl.FOLLOWLOCATION,1)
       if proxy:
         c.setopt(pycurl.PROXY,proxy['host'])

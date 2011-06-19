@@ -73,7 +73,7 @@ def getImageUrl(msg):
       url=searchhtml.searchImage(url,content)
     else:
       m=re.search("\[pic\](http:\/\/[^s]+)",msg)
-      url=m and m.group(1)
+      url=m and str(m.group(1))
 
     return url
 
