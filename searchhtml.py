@@ -1,17 +1,17 @@
 import sgmllib
 
 class MyParser(sgmllib.SGMLParser):
-  def parse(self,url,s):
+  def parse(self,s):
     self.site=None
-    if url.find('picplz.com')!=-1:
+    if s.find('picplzthumbs')!=-1:
       self.site='picplz'
-    elif url.find('flic.kr')!=-1:
+    elif s.find('static.flickr.com')!=-1:
       self.site='flickr'
-    elif url.find('instagr.am')!=-1:
+    elif s.find('instagram-static')!=-1:
       self.site='instagram'
-    elif url.find('4sq.com')!=-1:
+    elif s.find('<meta content="foursquare')!=-1:
       self.site='4sq'
-    elif url.find('twitpic.com')!=-1:
+    elif s.find('twitpic.com/show/')!=-1:
       self.site='twitpic'
 
     self.feed(s)
@@ -29,7 +29,7 @@ class MyParser(sgmllib.SGMLParser):
          (self.site=='flickr' and name=="alt" and value=="photo") or \
          (self.site=='4sq' and name=="class" and value=="mainPhoto") or \
          (self.site=='twitpic' and name=='id' and value=='photo-display'):
-        self.found=True
+        found=True
       elif name=="src":
         self.url=value
     if found:
@@ -37,7 +37,7 @@ class MyParser(sgmllib.SGMLParser):
       return
     self.url=None
 
-def searchImage(url, content):
+def searchImage(content):
   parser=MyParser()
-  parser.parse(url,content)
+  parser.parse(content)
   return parser.url

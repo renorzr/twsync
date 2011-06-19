@@ -2,9 +2,33 @@ import time
 from StringIO import StringIO
 import pycurl
 import base64
+import searchhtml
+
+class Storage:
+    def __init__(self):
+        self.contents = ''
+
+    def store(self, buf):
+        self.contents = self.contents+buf
+
+    def __str__(self):
+        return self.contents
+
+    def headers(self):
+        h=[]
+        r={}
+        for l in self.contents.split('\n'):
+          if l.strip()=='':
+            len(r) and h.append(r)
+            r={}
+          else: 
+            spidx=l.find(':')
+            r[l[:spidx]]=l[spidx+1:].strip()
+        return h
 
 def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
   b=StringIO()
+  res_headers=Storage()
   while(retry>0):
     retry-=1
     try:
@@ -21,6 +45,7 @@ def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
       if headers:
         c.setopt(pycurl.HTTPHEADER,headers)
       c.setopt(c.WRITEFUNCTION,b.write)
+      c.setopt(c.HEADERFUNCTION, res_headers.store)
       c.perform()
       retry=0
     except:
@@ -28,21 +53,16 @@ def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
 
     time.sleep(1)
 
-  return {'status_code':c.getinfo(pycurl.HTTP_CODE),'content':b.getvalue()}
+  return {'status_code':c.getinfo(pycurl.HTTP_CODE),'content':b.getvalue(),'headers':res_headers.headers()}
 
-def pic_multiple_body(msg,pic):
-  body="""Content-type: multipart/form-data, boundary=AaB03x
+def getImage(url,proxy=None):
+  r=url_fetch(url,proxy)
 
---AaB03x
-content-disposition: form-data; name="status"
+  if r['headers'][-1]['Content-Type'][:5]=='image':
+    return r['content']
 
-%s
---AaB03x
-content-disposition: form-data; name="pic"
-Content-Type: image/jpg
-Content-Transfer-Encoding: base64
+  if r['headers'][-1]['Content-Type'][:9]=='text/html':
+    url=searchhtml.searchImage(r['content'])
+    r=url_fetch(url,proxy)
+    return r['content']
 
-%s
---AaB03x--
-"""
-  return body%(msg,base64.b64encode(pic))

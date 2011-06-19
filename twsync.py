@@ -17,6 +17,7 @@ import signal
 import searchhtml
 import pycurl
 from httphelp import url_fetch
+from httphelp import getImage
 from sinaclient import SinaClient
 import json
 
@@ -62,32 +63,16 @@ def unescape(text):
        return text # leave as is
    return re.sub("&#?\w+;", fixup, text)
 
-def getImageUrl(msg):
-    url=None
-    m=re.search("http:\/\/((flic\.kr|instagr\.am)\/p|picplz\.com|4sq.com|twitpic.com)\/\w+",msg)
-    if m:
-      url=str(m.group(0))
-      r=url_fetch(url)
-      content=r['content']
-      logging.info('imagepage:'+url+' status_code:'+str(r['status_code']))
-      url=searchhtml.searchImage(url,content)
-    else:
-      m=re.search("\[pic\](http:\/\/[^s]+)",msg)
-      url=m and str(m.group(1))
-
-    return url
-
-def getImage(msg):
-    url=getImageUrl(msg)
-    if url:
-      return url_fetch(url)['content']
-    return None
+def findUrl(msg):
+    m=re.search("http:\/\/[^s]+",msg)
+    return m and str(m.group(0))
 
 def send_sina_msgs(msg,coord=None):
     try:
       logging.info("send_sina_msgs: "+msg)
       msg=unescape(msg)
-      image=getImage(msg)
+      url=findUrl(msg)
+      image=url and getImage(url)
       if image:
         logging.info('send pic')
         return sina.send_pic(msg,image,coord)
