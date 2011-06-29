@@ -109,6 +109,7 @@ def parseTwitter(twitter_id,since_id="",):
                     time.sleep(1)
             else:
                 logging.debug('ignore (%s) %s'%(id,text))
+                lastid=id
         return lastid
     else:
         logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
