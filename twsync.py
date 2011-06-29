@@ -88,9 +88,9 @@ def send_sina_msgs(msg,coord=None):
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id,since_id="",):
     if since_id:
-        url="http://twitter.com/statuses/user_timeline/%s.json?since_id=%s"%(twitter_id,since_id)
+        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
     else:
-        url="http://twitter.com/statuses/user_timeline/%s.json"%(twitter_id)
+        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s"%twitter_id
     proxy=config['twitter']['use_proxy'] and sync_proxy
     result = url_fetch(url,proxy=proxy)
     if result['status_code'] == 200:
