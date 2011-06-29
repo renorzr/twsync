@@ -62,7 +62,7 @@ def act(username,active):
   save_users(users)
   
 def format_user(u):
-  return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'],u['twitter_name'],(u['activated'] and 'activated' or 'non-activated'))
+  return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u['twitter_name'].ljust(20),(u['activated'] and 'activated' or 'non-activated'))
 
 def help():
   print """Usage: python users.py options args

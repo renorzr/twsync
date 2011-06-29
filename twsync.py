@@ -162,6 +162,7 @@ def stop_daemon():
   pid=get_running_daemon()
   if pid:
     os.kill(pid,signal.SIGHUP)
+    print 'twsync daemon (%d) killed'%pid
   else:
     print 'Error: twsync is not started'
 
