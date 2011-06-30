@@ -156,7 +156,9 @@ def start_daemon():
   else:
     print 'sync daemon started'
     while True:
+      logging.info('begin sync cycle')
       sync_once()
+      logging.info('end sync cycle')
       time.sleep(sync_interval)
 
 def stop_daemon():
