@@ -1,5 +1,6 @@
 from weibopy.auth import OAuthHandler, BasicAuthHandler
 from weibopy.api import API
+from weibopy import oauth
 
 class SinaClient:
     def __init__(self, key, secret):
@@ -15,6 +16,14 @@ class SinaClient:
 
     def get_access_token(self):
         token=self.auth.access_token
+        return token.key+'|'+token.secret
+
+    def set_request_token(self,token):
+        key,secret=token.split('|')
+        self.auth.request_token=oauth.OAuthToken(key,secret)
+
+    def get_request_token(self):
+        token=self.auth.request_token
         return token.key+'|'+token.secret
 
     def set_verifier(self,verifier):
