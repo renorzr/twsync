@@ -70,19 +70,19 @@ def findUrl(msg):
 
 def send_sina_msgs(msg,coord=None):
     try:
-      logging.info("send_sina_msgs: "+msg)
+      logger.info("send_sina_msgs: "+msg)
       msg=unescape(msg)
       url=findUrl(msg)
       image=url and getImage(url)
       if image:
-        logging.info('send pic')
+        logger.info('send pic')
         return sina.send_pic(msg,image,coord)
   
       return sina.send_msg(msg,coord)
     except:
       exc=sys.exc_info()
-      logging.error(exc[1].__str__())
-      logging.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))
+      logger.error(exc[1].__str__())
+      logger.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))
       return False
 
 #get one page of to user's replies, 20 messages at most. 
@@ -104,16 +104,16 @@ def parseTwitter(twitter_id,since_id="",):
             geo=t['geo']
             coord=geo and geo['coordinates']
             if text[0]!='@':
-                logging.info('sync (%s) %s'%(id,text))
+                logger.info('sync (%s) %s'%(id,text))
                 if send_sina_msgs(text,coord):
                     lastid=id
                     time.sleep(1)
             else:
-                logging.debug('ignore (%s) %s'%(id,text))
+                logger.debug('ignore (%s) %s'%(id,text))
                 lastid=id
         return lastid
     else:
-        logging.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
+        logger.warning("get twitter data error: ("+str(result['status_code'])+")\n"+result['content'])
         
 def sync_once():
   users=load_users()
@@ -157,9 +157,9 @@ def start_daemon():
   else:
     print 'sync daemon started'
     while True:
-      logging.info('begin sync cycle')
+      logger.info('begin sync cycle')
       sync_once()
-      logging.info('end sync cycle')
+      logger.info('end sync cycle')
       time.sleep(sync_interval)
 
 def stop_daemon():
@@ -193,7 +193,13 @@ def get_running_daemon():
 ####################
 # main starts here
 ####################
-logging.basicConfig(filename='twsync.log',level=logging.DEBUG)
+logger=logging.getLogger('twsync')
+h=logging.FileHandler('twsync.log')
+fmt=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+h.setFormatter(fmt)
+logger.addHandler(h)
+logger.setLevel(logging.DEBUG)
+
 f=file('config.yaml','r')
 config=yaml.load(f.read())
 f.close()
