@@ -99,7 +99,8 @@ def parseTwitter(twitter_id,since_id="",):
         lastid=None
         for t in reversed(tweets):
             id=str(t['id'])
-            text=t['text']
+            rt=t.get('retweeted_status')
+            text=rt and rt['text'] or t['text']
             geo=t['geo']
             coord=geo and geo['coordinates']
             if text[0]!='@':
