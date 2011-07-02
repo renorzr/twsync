@@ -4,6 +4,16 @@ import re
 import commands
 import Cookie
 import logging
+import sys
+import os
+
+dirname=os.path.dirname(os.path.realpath(__file__))
+logger=logging.getLogger('webtwsync')
+h=logging.FileHandler(dirname+'/webtwsync.log')
+fmt=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+h.setFormatter(fmt)
+logger.addHandler(h)
+logger.setLevel(logging.DEBUG)
 
 def apply(path,params,env):
     logger.info('apply')
@@ -51,13 +61,14 @@ def static(path,params,env):
       content_type='text/plain'
     headers=[('Content-Type',content_type)]
 
-    f=file('./'+path,'r')
+    f=file(dirname+'/'+path,'r')
     content=f.read()
     f.close()
     return ("200 OK", headers,content) 
 
 def application(environ, start_response):
     logger.info('application')
+    logger.info(str(sys.argv))
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
@@ -77,16 +88,8 @@ def application(environ, start_response):
 
 
 if __name__ == "__main__":
-  logger=logging.getLogger('webtwsync')
-  h=logging.FileHandler('webtwsync.log')
-  fmt=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-  h.setFormatter(fmt)
-  logger.addHandler(h)
-  logger.setLevel(logging.DEBUG)
-
   try:
     from wsgiref.simple_server import make_server
-    import sys
     port=(len(sys.argv)>1) and int(sys.argv[1]) or 8000
     print 'server on port: %i'%port
     httpd = make_server('', port, application)
