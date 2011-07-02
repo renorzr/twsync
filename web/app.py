@@ -3,10 +3,13 @@ from wsgiref.util import shift_path_info
 import re
 import commands
 import Cookie
+import logging
 
 def apply(path,params,env):
+    logger.info('apply')
     status,output=commands.getstatusoutput('cd ..;python users.py apply http://'+env['HTTP_HOST']+'/authorized')
-    print output
+    logger.info('user apply status='+str(status))
+    logger.debug(output)
     url,token=output.split("\n")
     headers=[
       ('Content-Type', 'text/plain'),
@@ -17,13 +20,22 @@ def apply(path,params,env):
     return ("302 Found", headers,'') 
 
 def authorized(path,params,env):
+    logger.info('authorized')
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
     token=cookie['token'].value
     verifier=params['oauth_verifier']
     name=cookie['twitter_name'].value
-    print 'token=',token,'verifier=',verifier,'name=',name
+    logger.debug('token=%s verfier=%s name=%s'%(token,verifier,name))
     status,output=commands.getstatusoutput('cd ..;python users.py add "%s" %s %s'%(token,verifier,name))
-    return ("200 OK", [('Content-Type', 'text/plain')], output)
+    logger.info('user add status='+str(status))
+    logger.debug(output)
+
+    headers=[
+      ('Content-Type', 'text/plain'),
+      ('Location', '/static/synced.html'),
+    ]
+
+    return ("302 Found", headers, '')
 
 def static(path,params,env):
     m=re.search('\.(jpg|gif|png|htm|html|js|css|txt)$',path)
@@ -45,13 +57,13 @@ def static(path,params,env):
     return ("200 OK", headers,content) 
 
 def application(environ, start_response):
+    logger.info('application')
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
       controller='static'
       environ['PATH_INFO']='index.html'
 
-    print 'controller=',controller
     controller=globals().get(controller)
     if controller:
       status, headers, content=controller(environ['PATH_INFO'],params,environ)
@@ -65,6 +77,13 @@ def application(environ, start_response):
 
 
 if __name__ == "__main__":
+  logger=logging.getLogger('webtwsync')
+  h=logging.FileHandler('webtwsync.log')
+  fmt=logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+  h.setFormatter(fmt)
+  logger.addHandler(h)
+  logger.setLevel(logging.DEBUG)
+
   try:
     from wsgiref.simple_server import make_server
     import sys
