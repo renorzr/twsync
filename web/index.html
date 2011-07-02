@@ -3,6 +3,15 @@
 <title>Twsync: Sync your Weibo with Twitter</title>
 <link rel="stylesheet" href="/static/style.css" media="all">
 </head>
+<script type="text/javascript">
+  function check(){
+    if (document.forms[0]['twitter_name'].value==''){
+      alert("That doesn't seem like a twitter name :(");
+      return false;
+    }
+    return true;
+  }
+</script>
 <body>
 <h1>Twsync</h1>
 <h3>Sync your Weibo with Twitter</h3>
@@ -10,7 +19,7 @@
 <form action='apply' method='GET'>
   Enter your Twitter name
   <input name="twitter_name"></input>
-  <input type="submit" value="Go Get Syned!"/>
+  <input type="submit" value="Go Get Syned!" onclick="return check()"/>
 </form>
 </div>
 </body>
