@@ -1,6 +1,7 @@
 import sys
 import yaml
 from sinaclient import SinaClient
+from urllib import urlencode
 
 def upgrade():
   users=load_users()
@@ -14,11 +15,14 @@ def upgrade():
     new_users[str(sinauser.id)]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':username,'sina_token':u['sina_token'],'last_tweet':u['last_tweet'],'activated':u['activated']}
   save_users(new_users)
 
-def apply():
+def apply(callback):
   sina=get_sina_client()
   url=sina.get_auth_url()
-  print 'url='+url
-  print 'token='+sina.get_request_token()
+  if callback:
+    url+='&'+urlencode({'oauth_callback':callback})
+
+  print url
+  print sina.get_request_token()
 
 def add(token,verifier,twitter_name):
   sina=get_sina_client()
@@ -79,7 +83,7 @@ def format_user(u):
 def help():
   print """Usage: python users.py options args
 options:
-apply                                   : apply for add user
+apply [callback url]                    : apply for add user
 add <token> <verifier> <twitter name>   : add a user
 register <twitter name>                 : register a user
 rm <userid>                             : remove user
@@ -123,7 +127,7 @@ if option=='add':
   else:
     help()
 elif option=='apply':
-  apply()
+  apply(len(sys.argv)>2 and sys.argv[2])
 elif option=='register':
   username=len(sys.argv)>2 and sys.argv[2]
   if username:
