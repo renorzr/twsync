@@ -43,13 +43,26 @@ def authorized(path,params,env):
     status,output=commands.getstatusoutput(cmd)
     logger.info('user add status='+str(status))
     logger.debug(output)
+    sinaname=output.split("\n")[2].split(" ")[0].split("\t")[1]
 
     headers=[
       ('Content-Type', 'text/plain'),
-      ('Location', '/static/synced.html'),
+      ('Location', '/synced'),
+      ('Set-Cookie', 'sina_name='+sinaname),
     ]
 
     return ("302 Found", headers, '')
+
+def synced(path,params,env):
+    f=file(dirname+'/synced.html','r')
+    content=f.read()
+    f.close()
+    cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
+    twittername=cookie['twitter_name'].value
+    sinaname=cookie['sina_name'].value
+    content=content.replace('{twittername}',twittername)
+    content=content.replace('{sinaname}',sinaname)
+    return ("200 OK", [('Content-Type', 'text/html')], content)
 
 def static(path,params,env):
     m=re.search('\.(jpg|gif|png|htm|html|js|css|txt)$',path)

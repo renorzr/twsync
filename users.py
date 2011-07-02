@@ -31,8 +31,11 @@ def add(token,verifier,twitter_name):
   token=sina.get_access_token()
   sinauser=sina.get_user()
   users=load_users()
-  users[str(sinauser.id)]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
-  if not save_users(users):
+  users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
+  print format_user(user)
+  if save_users(users):
+    print 'add user ok'
+  else:
     print 'add user failed'
 
 def register(twitter_name):
