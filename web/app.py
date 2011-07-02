@@ -17,7 +17,9 @@ logger.setLevel(logging.DEBUG)
 
 def apply(path,params,env):
     logger.info('apply')
-    status,output=commands.getstatusoutput('cd ..;python users.py apply http://'+env['HTTP_HOST']+'/authorized')
+    cmd='cd '+dirname+'/..;python users.py apply http://'+env['HTTP_HOST']+'/authorized'
+    logger.debug(cmd)
+    status,output=commands.getstatusoutput(cmd)
     logger.info('user apply status='+str(status))
     logger.debug(output)
     url,token=output.split("\n")
@@ -36,7 +38,9 @@ def authorized(path,params,env):
     verifier=params['oauth_verifier']
     name=cookie['twitter_name'].value
     logger.debug('token=%s verfier=%s name=%s'%(token,verifier,name))
-    status,output=commands.getstatusoutput('cd ..;python users.py add "%s" %s %s'%(token,verifier,name))
+    cmd='cd '+dirname+'/..;python users.py add "%s" %s %s'%(token,verifier,name)
+    logger.debug(cmd)
+    status,output=commands.getstatusoutput(cmd)
     logger.info('user add status='+str(status))
     logger.debug(output)
 
