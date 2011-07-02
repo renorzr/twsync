@@ -27,3 +27,15 @@ div.synced{
   margin-top:20px;
   text-align: center;
 }
+
+div.wrapper{
+  min-height: 100%;
+  height: auto;
+  height: 100%;
+  margin: 0 auto -5em;
+}
+
+div.footer{
+  height: 5em;
+}
+
