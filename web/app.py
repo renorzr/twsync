@@ -1,11 +1,11 @@
 from urlparse import urlparse,parse_qsl
 from wsgiref.util import shift_path_info
 import re
-import commands
 import Cookie
 import logging
 import sys
 import os
+import urllib
 
 dirname=os.path.dirname(os.path.realpath(__file__))
 logger=logging.getLogger('webtwsync')
@@ -15,14 +15,12 @@ h.setFormatter(fmt)
 logger.addHandler(h)
 logger.setLevel(logging.DEBUG)
 
+sys.path.append(dirname+'/../')
+import users
+
 def apply(path,params,env):
     logger.info('apply')
-    cmd='cd '+dirname+'/..;python users.py apply http://'+env['HTTP_HOST']+'/authorized'
-    logger.debug(cmd)
-    status,output=commands.getstatusoutput(cmd)
-    logger.info('user apply status='+str(status))
-    logger.debug(output)
-    url,token=output.split("\n")
+    url,token=users.apply('http://'+env['HTTP_HOST']+'/authorized')
     headers=[
       ('Content-Type', 'text/plain'),
       ('Set-Cookie', 'token='+token),
@@ -37,18 +35,14 @@ def authorized(path,params,env):
     token=cookie['token'].value
     verifier=params['oauth_verifier']
     name=cookie['twitter_name'].value
-    logger.debug('token=%s verfier=%s name=%s'%(token,verifier,name))
-    cmd='cd '+dirname+'/..;python users.py add "%s" %s %s'%(token,verifier,name)
-    logger.debug(cmd)
-    status,output=commands.getstatusoutput(cmd)
-    logger.info('user add status='+str(status))
-    logger.debug(output)
-    sinaname=output.split("\n")[2].split(" ")[0].split("\t")[1]
+    succ,user=users.add(token,verifier,name)
+    logger.info('add user '+(succ and 'ok' or 'failed'))
+    cookiestr='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
 
     headers=[
       ('Content-Type', 'text/plain'),
       ('Location', '/synced'),
-      ('Set-Cookie', 'sina_name='+sinaname),
+      ('Set-Cookie', cookiestr),
     ]
 
     return ("302 Found", headers, '')
@@ -60,9 +54,12 @@ def synced(path,params,env):
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
     twittername=cookie['twitter_name'].value
     sinaname=cookie['sina_name'].value
+    print 'sinaname=',sinaname
+    sinaname=urllib.unquote_plus(sinaname).decode('unicode_escape')
+    print 'decoded sinaname=',sinaname
     content=content.replace('{twittername}',twittername)
     content=content.replace('{sinaname}',sinaname)
-    return ("200 OK", [('Content-Type', 'text/html')], content)
+    return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
 
 def static(path,params,env):
     m=re.search('\.(jpg|gif|png|htm|html|js|css|txt)$',path)
@@ -101,7 +98,7 @@ def application(environ, start_response):
       content="Page Not Found"
 
     start_response(status,headers)
-    yield content
+    return [content]
 
 
 if __name__ == "__main__":

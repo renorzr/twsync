@@ -2,6 +2,15 @@ import sys
 import yaml
 from sinaclient import SinaClient
 from urllib import urlencode
+import os
+
+###############################
+## initialize
+###############################
+dirname=os.path.dirname(os.path.realpath(__file__))
+f=file(dirname+'/config.yaml','r')
+config=yaml.load(f.read())
+f.close()
 
 def upgrade():
   users=load_users()
@@ -21,8 +30,7 @@ def apply(callback):
   if callback:
     url+='&'+urlencode({'oauth_callback':callback})
 
-  print url
-  print sina.get_request_token()
+  return (url,sina.get_request_token())
 
 def add(token,verifier,twitter_name):
   sina=get_sina_client()
@@ -32,53 +40,38 @@ def add(token,verifier,twitter_name):
   sinauser=sina.get_user()
   users=load_users()
   users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
-  print format_user(user)
   if save_users(users):
-    print 'add user ok'
+    return (True, user)
   else:
-    print 'add user failed'
+    return (False, user)
 
 def register(twitter_name):
   sina=get_sina_client()
   users=load_users()
   url=sina.get_auth_url()
   verifier=raw_input('goto '+url+' get pin code:')
-  add(sina.get_request_token(),verifier,twitter_name)
+  succ,user=add(sina.get_request_token(),verifier,twitter_name)
+  print 'register '+(succ and 'ok' or 'fail')
+  print format_user(user)
 
-def rm(sina_id):
+def rm(userid):
   users=load_users()
-  if (users.has_key(sina_id)):
-    print 'delete user '+format_user(users[sina_id])
-    del(users[sina_id])
-  else:
-    print 'user '+sina_id+" doesn't exist"
-  save_users(users)
+  if (users.has_key(userid)):
+    user=users[userid]
+    del(users[userid])
+    return (save_users(users),user)
+  return (False,None)
 
 def ls():
   users=load_users()
   print '\n'.join(map(lambda u:format_user(u),users.values()))
 
-def mv(u1,u2):
+def act(userid,active):
   users=load_users()
-  if users.has_key(u2):
-    print 'user '+u2+' exists:'
-    print format_user(users[u2])
-    return
-  if not users.has_key(u1):
-    print 'user '+u1+' does\'nt exist'
-    return
-  users[u2]=users[u1]
-  del(users[u1])
-
-def act(username,active):
-  users=load_users()
-  if (users.has_key(username)):
-    users[username]['activated']=active
-    print 'user %s:'%(active and 'activated' or 'deactivated')
-    print format_user(users[username])
-  else:
-    print 'user '+username+" doesn't exist"
-  save_users(users)
+  if (users.has_key(userid)):
+    users[userid]['activated']=active
+    return (save_users(users),users[userid])
+  return (False,None)
   
 def format_user(u):
   return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u['twitter_name'].ljust(20),(u['activated'] and 'activated' or 'non-activated'))
@@ -90,7 +83,6 @@ apply [callback url]                    : apply for add user
 add <token> <verifier> <twitter name>   : add a user
 register <twitter name>                 : register a user
 rm <userid>                             : remove user
-mv <userid1> <userid2>                  : rename user1 as user2
 act <userid> <1|0>                      : activate(1) or deactivate(0) a user
 ls                                      : list all users
 """
@@ -98,7 +90,7 @@ ls                                      : list all users
 def load_users():
   users={}
   try:
-    f=file('users.yaml','r')
+    f=file(dirname+'/users.yaml','r')
     users=yaml.load(f.read())
     f.close()
   except:
@@ -107,7 +99,7 @@ def load_users():
 
 def save_users(users):
   try:
-    f=file('users.yaml','w')
+    f=file(dirname+'/users.yaml','w')
     yaml.dump(users,stream=f)
     f.close()
     return True
@@ -120,45 +112,45 @@ def get_sina_client():
 ####################
 # main starts here
 ####################
-f=file('config.yaml','r')
-config=yaml.load(f.read())
-f.close()
-option=len(sys.argv)>1 and sys.argv[1]
-if option=='add':
-  if len(sys.argv)>4:
-    add(sys.argv[2],sys.argv[3],sys.argv[4])
+if __name__ == "__main__":
+  option=len(sys.argv)>1 and sys.argv[1]
+  if option=='add':
+    if len(sys.argv)>4:
+      succ,user=add(sys.argv[2],sys.argv[3],sys.argv[4])
+      print 'add user '+(succ and 'ok' or 'failed')
+      print format_user(user)
+    else:
+      help()
+  elif option=='apply':
+    url,token=apply(len(sys.argv)>2 and sys.argv[2])
+    print url
+    print token
+  elif option=='register':
+    username=len(sys.argv)>2 and sys.argv[2]
+    if username:
+      register(username)
+    else:
+      help()
+  elif option=='rm':
+    username=len(sys.argv)>2 and sys.argv[2]
+    if username:
+      succ,user=rm(username)
+      print 'delete user '+(succ and 'ok' or 'failed')
+      print format_user(user)
+    else:
+      help()
+  elif option=='act':
+    username=len(sys.argv)>2 and sys.argv[2]
+    active=len(sys.argv)==4 and sys.argv[3]
+    if username and active:
+      succ,user=act(username,active=='1')
+      print 'user '+(succ and '' or 'not ')+(active and 'activated' or 'deactivated')
+      print format_user(user)
+    else:
+      help()
+  elif option=='ls':
+    ls()
+  elif option=='upgrade':
+    upgrade()
   else:
     help()
-elif option=='apply':
-  apply(len(sys.argv)>2 and sys.argv[2])
-elif option=='register':
-  username=len(sys.argv)>2 and sys.argv[2]
-  if username:
-    register(username)
-  else:
-    help()
-elif option=='rm':
-  username=len(sys.argv)>2 and sys.argv[2]
-  if username:
-    rm(username)
-  else:
-    help()
-elif option=='act':
-  username=len(sys.argv)>2 and sys.argv[2]
-  active=len(sys.argv)==4 and sys.argv[3]
-  if username and active:
-    act(username,active=='1')
-  else:
-    help()
-elif option=='ls':
-  ls()
-elif option=='mv':
-  u1,u2=len(sys.argv)>3 and sys.argv[2:4] or (None,None)
-  if u1 and u2:
-    mv(u1,u2)
-  else:
-    help()
-elif option=='upgrade':
-  upgrade()
-else:
-  help()
