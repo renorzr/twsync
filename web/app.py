@@ -54,9 +54,7 @@ def synced(path,params,env):
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
     twittername=cookie['twitter_name'].value
     sinaname=cookie['sina_name'].value
-    print 'sinaname=',sinaname
     sinaname=urllib.unquote_plus(sinaname).decode('unicode_escape')
-    print 'decoded sinaname=',sinaname
     content=content.replace('{twittername}',twittername)
     content=content.replace('{sinaname}',sinaname)
     return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
