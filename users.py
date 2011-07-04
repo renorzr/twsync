@@ -3,6 +3,7 @@ import yaml
 from sinaclient import SinaClient
 from urllib import urlencode
 import os
+import random
 
 ###############################
 ## initialize
@@ -39,7 +40,7 @@ def add(token,verifier,twitter_name):
   token=sina.get_access_token()
   sinauser=sina.get_user()
   users=load_users()
-  users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
+  users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True,'session':'%08X'%(random.random()*0xffffffff)}
   if save_users(users):
     return (True, user)
   else:
@@ -72,6 +73,9 @@ def act(userid,active):
     users[userid]['activated']=active
     return (save_users(users),users[userid])
   return (False,None)
+
+def get(userid):
+  return load_users.get(userid)
   
 def format_user(u):
   return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u['twitter_name'].ljust(20),(u['activated'] and 'activated' or 'non-activated'))

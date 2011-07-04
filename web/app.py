@@ -1,4 +1,4 @@
-from urlparse import urlparse,parse_qsl
+from urlparse import urlparse,parse_qsl,parse_qs
 from wsgiref.util import shift_path_info
 import re
 import Cookie
@@ -37,15 +37,65 @@ def authorized(path,params,env):
     name=cookie['twitter_name'].value
     succ,user=users.add(token,verifier,name)
     logger.info('add user '+(succ and 'ok' or 'failed'))
-    cookiestr='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
+    cs1='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
+    cs2='session=%s'%user['session']
+    cs3='userid=%s'%user['sina_id']
 
     headers=[
       ('Content-Type', 'text/plain'),
-      ('Location', '/synced'),
-      ('Set-Cookie', cookiestr),
+      ('Location', '/settings'),
+      ('Set-Cookie', cs1),
+      ('Set-Cookie', cs2),
+      ('Set-Cookie', cs3),
     ]
 
     return ("302 Found", headers, '')
+
+def settings(path,params,env):
+   cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
+   sina_name=cookie['sina_name'].value.decode('unicode_escape')
+   userid=cookie['userid'].value
+   session=cookie['session'].value
+   allusers=users.load_users()
+   user=allusers.get(userid)
+   if user and user['session']==session:
+     # authorized
+     try:
+        request_body_size = int(env.get('CONTENT_LENGTH', 0))
+     except (ValueError):
+        request_body_size = 0
+
+     if request_body_size:
+       # save settings
+       request_body=env['wsgi.input'].read(request_body_size)
+       d=parse_qs(request_body)
+       allusers[userid]['twitter_name']=d['twitter_name'][0]
+       allusers[userid]['activated']=d.get('activated') and True or False
+       users.save_users(allusers)
+       # redirect to synced
+       status="302 Found"
+       headers=[
+        ('Content-Type', 'text/plain'),
+        ('Location', '/synced'),
+       ]
+       content=''
+     else:
+       # render settings
+       status="200 OK"
+       headers=[('Content-Type', 'text/html;charset=UTF-8')]
+       user['activated_checked']=user['activated'] and 'checked="1"' or ''
+       content=__template(dirname+'/settings.html',user).encode('utf-8')
+   else:
+     # unauthorized
+     status="302 Found"
+     headers=[
+      ('Content-Type', 'text/plain'),
+      ('Location', '/unauthorized'),
+     ]
+     content=''
+   
+   return (status, headers, content)
+
 
 def synced(path,params,env):
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
@@ -56,7 +106,7 @@ def synced(path,params,env):
     content=__template(dirname+'/synced.html',values)
     return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
 
-def __static(path,params,env):
+def static(path,params,env):
     m=re.search('\.(jpg|gif|png|htm|html|js|css|txt)$',path)
     if not m:
       return ("403 Forbidden",[('Content-Type', 'text/plain')],"Forbidden")
@@ -79,9 +129,11 @@ def __template(filename,values):
     f=file(filename,'r')
     content=f.read()
     f.close()
-    for k,v in values:
-      tag='{'+k+'}'
-      content=content.replace(tag,v)
+    for k in values:
+      tag='${'+k+'}'
+      v=values[k]
+      if v:
+        content=content.replace(tag,unicode(v))
     return content
 
 def application(environ, start_response):
@@ -90,7 +142,7 @@ def application(environ, start_response):
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
-      controller='__static'
+      controller='static'
       environ['PATH_INFO']='index.html'
 
     controller=globals().get(controller)
