@@ -48,18 +48,15 @@ def authorized(path,params,env):
     return ("302 Found", headers, '')
 
 def synced(path,params,env):
-    f=file(dirname+'/synced.html','r')
-    content=f.read()
-    f.close()
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
     twittername=cookie['twitter_name'].value
     sinaname=cookie['sina_name'].value
     sinaname=urllib.unquote_plus(sinaname).decode('unicode_escape')
-    content=content.replace('{twittername}',twittername)
-    content=content.replace('{sinaname}',sinaname)
+    values={'twittername':twittername,'sinaname':sinaname}
+    content=__template(dirname+'/synced.html',values)
     return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
 
-def static(path,params,env):
+def __static(path,params,env):
     m=re.search('\.(jpg|gif|png|htm|html|js|css|txt)$',path)
     if not m:
       return ("403 Forbidden",[('Content-Type', 'text/plain')],"Forbidden")
@@ -78,13 +75,22 @@ def static(path,params,env):
     f.close()
     return ("200 OK", headers,content) 
 
+def __template(filename,values):
+    f=file(filename,'r')
+    content=f.read()
+    f.close()
+    for k,v in values:
+      tag='{'+k+'}'
+      content=content.replace(tag,v)
+    return content
+
 def application(environ, start_response):
     logger.info('application')
     logger.info(str(sys.argv))
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
-      controller='static'
+      controller='__static'
       environ['PATH_INFO']='index.html'
 
     controller=globals().get(controller)
