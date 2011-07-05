@@ -18,16 +18,27 @@ logger.setLevel(logging.DEBUG)
 sys.path.append(dirname+'/../')
 import users
 
-def apply(path,params,env):
+def login(path,params,env):
     logger.info('apply')
     url,token=users.apply('http://'+env['HTTP_HOST']+'/authorized')
     headers=[
-      ('Content-Type', 'text/plain'),
       ('Set-Cookie', 'token='+token),
-      ('Set-Cookie', 'twitter_name='+params['twitter_name']),
+      ('Set-Cookie', 'twitter_name='+params.get('twitter_name','')),
       ('Location', url),
     ]
     return ("302 Found", headers,'') 
+
+def logout(path,params,env):
+    headers=[
+      ('Set-Cookie', 'token='),
+      ('Set-Cookie', 'twitter_name='),
+      ('Set-Cookie', 'sina_name='),
+      ('Set-Cookie', 'session='),
+      ('Set-Cookie', 'userid='),
+      ('Location', '/'),
+    ]
+    return ("302 Found", headers,'') 
+    
 
 def authorized(path,params,env):
     logger.info('authorized')
@@ -52,13 +63,11 @@ def authorized(path,params,env):
     return ("302 Found", headers, '')
 
 def settings(path,params,env):
-   cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
-   sina_name=cookie['sina_name'].value.decode('unicode_escape')
-   userid=cookie['userid'].value
-   session=cookie['session'].value
    allusers=users.load_users()
-   user=allusers.get(userid)
-   if user and user['session']==session:
+   user=__get_user(env,allusers)
+
+   if user :
+     print 'authorized'
      # authorized
      try:
         request_body_size = int(env.get('CONTENT_LENGTH', 0))
@@ -84,13 +93,15 @@ def settings(path,params,env):
        status="200 OK"
        headers=[('Content-Type', 'text/html;charset=UTF-8')]
        user['activated_checked']=user['activated'] and 'checked="1"' or ''
+       user['userinfo']=__render_userinfo(user)
        content=__template(dirname+'/settings.html',user).encode('utf-8')
    else:
      # unauthorized
+     logger.info('unauthorized')
      status="302 Found"
      headers=[
       ('Content-Type', 'text/plain'),
-      ('Location', '/unauthorized'),
+      ('Location', '/'),
      ]
      content=''
    
@@ -104,6 +115,12 @@ def synced(path,params,env):
     sinaname=urllib.unquote_plus(sinaname).decode('unicode_escape')
     values={'twittername':twittername,'sinaname':sinaname}
     content=__template(dirname+'/synced.html',values)
+    return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
+
+def index(path,params,env):
+    allusers=users.load_users()
+    user=__get_user(env,allusers)
+    content=__template(dirname+'/index.html',{'userinfo':__render_userinfo(user)})
     return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
 
 def static(path,params,env):
@@ -132,9 +149,27 @@ def __template(filename,values):
     for k in values:
       tag='${'+k+'}'
       v=values[k]
-      if v:
+      if v or type(v)==str:
         content=content.replace(tag,unicode(v))
     return content
+
+def __get_user(env,allusers):
+   cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
+   try:
+     sina_name=cookie['sina_name'].value.decode('unicode_escape')
+     userid=cookie['userid'].value
+     session=cookie['session'].value
+     user=allusers.get(userid)
+     return user and (user['session']==session) and user
+   except:
+     logger.debug('something wrong')
+     user=None
+
+def __render_userinfo(user):
+    if user:
+      return "Hi %s | [<a href='/logout'>logout</a>]"%user['sina_name']
+    else:
+      return ""
 
 def application(environ, start_response):
     logger.info('application')
@@ -142,8 +177,7 @@ def application(environ, start_response):
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
-      controller='static'
-      environ['PATH_INFO']='index.html'
+      controller='index'
 
     controller=globals().get(controller)
     if controller:

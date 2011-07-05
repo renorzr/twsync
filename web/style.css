@@ -1,6 +1,12 @@
-h1 {
+.head {
+  font-size:30px;
   background-color: #C0DEED;
   height:50px;
+  position:relative;
+}
+
+h3 {
+  display:inline-block;
 }
 
 h2 {
@@ -39,3 +45,8 @@ div.footer{
   height: 5em;
 }
 
+div.userinfo{
+  font-size:15px;
+  float:right;
+  display:inline-block;
+}

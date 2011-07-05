@@ -5,7 +5,7 @@
 </head>
 <script type="text/javascript">
   function check(){
-    if (document.forms[0]['twitter_name'].value==''){
+    if (!/^\w+$/.test(document.forms[0]['twitter_name'].value)){
       alert("That doesn't seem like a twitter name :(");
       return false;
     }
@@ -14,7 +14,9 @@
 </script>
 <body>
 <div class="wrapper">
-  <h1>Twsync</h1>
+  <div class="head">Twsync
+    <div class="userinfo">${userinfo}</div>
+  </div>
   <h3>Settings</h3>
   <div>
   <form method='POST'>

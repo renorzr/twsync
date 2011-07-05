@@ -33,14 +33,22 @@ def apply(callback):
 
   return (url,sina.get_request_token())
 
-def add(token,verifier,twitter_name):
+def add(token,verifier,twitter_name=None):
   sina=get_sina_client()
   sina.set_request_token(token)
   sina.set_verifier(verifier)
   token=sina.get_access_token()
   sinauser=sina.get_user()
   users=load_users()
-  users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True,'session':'%08X'%(random.random()*0xffffffff)}
+  userid=str(sinauser.id)
+  user=users[userid]
+  user['sina_id']=sinauser.id
+  user['sina_name']=sinauser.screen_name
+  user['twitter_name']=twitter_name
+  user['sina_token']=token
+  user['session']='%08X'%(random.random()*0xffffffff)
+  user['activated']=user.get('activated',True)
+  users[userid]=user
   if save_users(users):
     return (True, user)
   else:
