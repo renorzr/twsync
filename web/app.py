@@ -48,6 +48,7 @@ def authorized(path,params,env):
     name=cookie['twitter_name'].value
     succ,user=users.add(token,verifier,name)
     logger.info('add user '+(succ and 'ok' or 'failed'))
+    logger.debug(str(user))
     cs1='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
     cs2='session=%s'%user['session']
     cs3='userid=%s'%user['sina_id']
@@ -65,6 +66,7 @@ def authorized(path,params,env):
 def settings(path,params,env):
    allusers=users.load_users()
    user=__get_user(env,allusers)
+   userid=str(user['sina_id'])
 
    if user :
      print 'authorized'
@@ -154,7 +156,9 @@ def __template(filename,values):
     return content
 
 def __get_user(env,allusers):
-   cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
+   cookie=Cookie.SimpleCookie(env.get('HTTP_COOKIE'))
+   if not cookie:
+     return None
    try:
      sina_name=cookie['sina_name'].value.decode('unicode_escape')
      userid=cookie['userid'].value

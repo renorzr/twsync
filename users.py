@@ -44,7 +44,6 @@ def add(token,verifier,twitter_name=None):
   user=users[userid]
   user['sina_id']=sinauser.id
   user['sina_name']=sinauser.screen_name
-  user['twitter_name']=twitter_name
   user['sina_token']=token
   user['session']='%08X'%(random.random()*0xffffffff)
   user['activated']=user.get('activated',True)
