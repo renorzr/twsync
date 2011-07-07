@@ -1,4 +1,4 @@
-from urlparse import urlparse,parse_qsl
+from urlparse import urlparse,parse_qsl,parse_qs
 from wsgiref.util import shift_path_info
 import re
 import Cookie
@@ -18,16 +18,27 @@ logger.setLevel(logging.DEBUG)
 sys.path.append(dirname+'/../')
 import users
 
-def apply(path,params,env):
+def login(path,params,env):
     logger.info('apply')
     url,token=users.apply('http://'+env['HTTP_HOST']+'/authorized')
     headers=[
-      ('Content-Type', 'text/plain'),
       ('Set-Cookie', 'token='+token),
-      ('Set-Cookie', 'twitter_name='+params['twitter_name']),
+      ('Set-Cookie', 'twitter_name='+params.get('twitter_name','')),
       ('Location', url),
     ]
     return ("302 Found", headers,'') 
+
+def logout(path,params,env):
+    headers=[
+      ('Set-Cookie', 'token='),
+      ('Set-Cookie', 'twitter_name='),
+      ('Set-Cookie', 'sina_name='),
+      ('Set-Cookie', 'session='),
+      ('Set-Cookie', 'userid='),
+      ('Location', '/'),
+    ]
+    return ("302 Found", headers,'') 
+    
 
 def authorized(path,params,env):
     logger.info('authorized')
@@ -37,26 +48,79 @@ def authorized(path,params,env):
     name=cookie['twitter_name'].value
     succ,user=users.add(token,verifier,name)
     logger.info('add user '+(succ and 'ok' or 'failed'))
-    cookiestr='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
+    cs1='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))
+    cs2='session=%s'%user['session']
+    cs3='userid=%s'%user['sina_id']
 
     headers=[
       ('Content-Type', 'text/plain'),
-      ('Location', '/synced'),
-      ('Set-Cookie', cookiestr),
+      ('Location', '/settings'),
+      ('Set-Cookie', cs1),
+      ('Set-Cookie', cs2),
+      ('Set-Cookie', cs3),
     ]
 
     return ("302 Found", headers, '')
 
+def settings(path,params,env):
+   allusers=users.load_users()
+   user=__get_user(env,allusers)
+
+   if user :
+     print 'authorized'
+     # authorized
+     try:
+        request_body_size = int(env.get('CONTENT_LENGTH', 0))
+     except (ValueError):
+        request_body_size = 0
+
+     if request_body_size:
+       # save settings
+       request_body=env['wsgi.input'].read(request_body_size)
+       d=parse_qs(request_body)
+       allusers[userid]['twitter_name']=d['twitter_name'][0]
+       allusers[userid]['activated']=d.get('activated') and True or False
+       users.save_users(allusers)
+       # redirect to synced
+       status="302 Found"
+       headers=[
+        ('Content-Type', 'text/plain'),
+        ('Location', '/synced'),
+       ]
+       content=''
+     else:
+       # render settings
+       status="200 OK"
+       headers=[('Content-Type', 'text/html;charset=UTF-8')]
+       user['activated_checked']=user['activated'] and 'checked="1"' or ''
+       user['userinfo']=__render_userinfo(user)
+       content=__template(dirname+'/settings.html',user).encode('utf-8')
+   else:
+     # unauthorized
+     logger.info('unauthorized')
+     status="302 Found"
+     headers=[
+      ('Content-Type', 'text/plain'),
+      ('Location', '/'),
+     ]
+     content=''
+   
+   return (status, headers, content)
+
+
 def synced(path,params,env):
-    f=file(dirname+'/synced.html','r')
-    content=f.read()
-    f.close()
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
     twittername=cookie['twitter_name'].value
     sinaname=cookie['sina_name'].value
     sinaname=urllib.unquote_plus(sinaname).decode('unicode_escape')
-    content=content.replace('{twittername}',twittername)
-    content=content.replace('{sinaname}',sinaname)
+    values={'twittername':twittername,'sinaname':sinaname}
+    content=__template(dirname+'/synced.html',values)
+    return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
+
+def index(path,params,env):
+    allusers=users.load_users()
+    user=__get_user(env,allusers)
+    content=__template(dirname+'/index.html',{'userinfo':__render_userinfo(user)})
     return ("200 OK", [('Content-Type', 'text/html;charset=UTF-8')], content.encode('utf-8'))
 
 def static(path,params,env):
@@ -78,14 +142,42 @@ def static(path,params,env):
     f.close()
     return ("200 OK", headers,content) 
 
+def __template(filename,values):
+    f=file(filename,'r')
+    content=f.read()
+    f.close()
+    for k in values:
+      tag='${'+k+'}'
+      v=values[k]
+      if v or type(v)==str:
+        content=content.replace(tag,unicode(v))
+    return content
+
+def __get_user(env,allusers):
+   cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
+   try:
+     sina_name=cookie['sina_name'].value.decode('unicode_escape')
+     userid=cookie['userid'].value
+     session=cookie['session'].value
+     user=allusers.get(userid)
+     return user and (user['session']==session) and user
+   except:
+     logger.debug('something wrong')
+     user=None
+
+def __render_userinfo(user):
+    if user:
+      return "Hi %s | [<a href='/logout'>logout</a>]"%user['sina_name']
+    else:
+      return ""
+
 def application(environ, start_response):
     logger.info('application')
     logger.info(str(sys.argv))
     controller=shift_path_info(environ)
     params=dict(parse_qsl(environ['QUERY_STRING']))
     if controller=='':
-      controller='static'
-      environ['PATH_INFO']='index.html'
+      controller='index'
 
     controller=globals().get(controller)
     if controller:

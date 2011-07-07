@@ -3,6 +3,7 @@ import yaml
 from sinaclient import SinaClient
 from urllib import urlencode
 import os
+import random
 
 ###############################
 ## initialize
@@ -32,14 +33,22 @@ def apply(callback):
 
   return (url,sina.get_request_token())
 
-def add(token,verifier,twitter_name):
+def add(token,verifier,twitter_name=None):
   sina=get_sina_client()
   sina.set_request_token(token)
   sina.set_verifier(verifier)
   token=sina.get_access_token()
   sinauser=sina.get_user()
   users=load_users()
-  users[str(sinauser.id)]=user={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':twitter_name,'sina_token':token,'last_tweet':None,'activated':True}
+  userid=str(sinauser.id)
+  user=users[userid]
+  user['sina_id']=sinauser.id
+  user['sina_name']=sinauser.screen_name
+  user['twitter_name']=twitter_name
+  user['sina_token']=token
+  user['session']='%08X'%(random.random()*0xffffffff)
+  user['activated']=user.get('activated',True)
+  users[userid]=user
   if save_users(users):
     return (True, user)
   else:
@@ -72,6 +81,9 @@ def act(userid,active):
     users[userid]['activated']=active
     return (save_users(users),users[userid])
   return (False,None)
+
+def get(userid):
+  return load_users.get(userid)
   
 def format_user(u):
   return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u['twitter_name'].ljust(20),(u['activated'] and 'activated' or 'non-activated'))

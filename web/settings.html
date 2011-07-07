@@ -1,0 +1,44 @@
+<html>
+<head>
+<title>Twsync: Sync your Weibo with Twitter</title>
+<link rel="stylesheet" href="/static/style.css" media="all">
+</head>
+<script type="text/javascript">
+  function check(){
+    if (!/^\w+$/.test(document.forms[0]['twitter_name'].value)){
+      alert("That doesn't seem like a twitter name :(");
+      return false;
+    }
+    return true;
+  }
+</script>
+<body>
+<div class="wrapper">
+  <div class="head">Twsync
+    <div class="userinfo">${userinfo}</div>
+  </div>
+  <h3>Settings</h3>
+  <div>
+  <form method='POST'>
+    <div>Your sina name is ${sina_name}</div>
+    <div>
+      Twitter name
+      <input name="twitter_name" value="${twitter_name}"></input>
+    </div>
+    <div>
+      Sync Enabled
+      <input name="activated" value="1" type="checkbox" ${activated_checked}></input>
+    </div>
+    <div>
+      <input type="submit" value="Save Settings" onclick="return check()"/>
+    </div>
+  </form>
+  </div>
+</div>
+<div class="footer">
+  <hr/>
+  NOTE: I made this for fun. Use it at your own risk. I'm @renorzr, follow me either on <a href="http://weibo.com/renoren">weibo</a> or <a href="http://twitter.com/renorzr">twitter</a>. This project is opensourced on <a href="http://github.com/renorzr/twsync">github</a>.
+</div>
+</body>
+</html>
+

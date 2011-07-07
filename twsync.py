@@ -120,7 +120,7 @@ def sync_once():
   synced=0
   for username in users:
     user=users[username]
-    if user['activated']:
+    if user['activated'] and user['twitter_name']:
       id=sync_user(user)
       if (id):
         users[username]['last_tweet']=id
