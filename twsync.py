@@ -86,7 +86,7 @@ def send_sina_msgs(msg,coord=None):
       return False
 
 #get one page of to user's replies, 20 messages at most. 
-def parseTwitter(twitter_id,since_id="",):
+def parseTwitter(twitter_id,since_id=None,):
     if since_id:
         url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
     else:
@@ -130,8 +130,9 @@ def sync_once():
     save_users(users)
 
 def sync_user(user):
+  logger.info('sync user %s <- %s'%(user['sina_name'],user['twitter_name']))
   sina.set_access_token(user['sina_token'])
-  return parseTwitter(twitter_id=user['twitter_name'],since_id=user['last_tweet'])
+  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'))
 
 def find_user(username):
   return load_users()[username]
