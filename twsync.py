@@ -21,6 +21,7 @@ from httphelp import url_fetch
 from httphelp import getImage
 from sinaclient import SinaClient
 import json
+import urllib
 
 def make_cookie_header(cookie):
     ret = ""
@@ -68,11 +69,16 @@ def findUrl(msg):
     m=re.search("http:\/\/[^\s]+",msg)
     return m and str(m.group(0))
 
+def extractShortUrl(msg):
+    url = findUrl(msg)
+    dest = urllib.urlopen(url).url
+    return url, msg.replace(url, dest)
+
 def send_sina_msgs(msg,coord=None):
     try:
-      logger.info("send_sina_msgs: "+msg)
       msg=unescape(msg)
-      url=findUrl(msg)
+      url, msg = extractShortUrl(msg)
+      logger.info("send_sina_msgs: "+msg)
       image=url and getImage(url)
       if image:
         logger.info('send pic')
