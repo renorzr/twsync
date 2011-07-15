@@ -70,9 +70,12 @@ def findUrl(msg):
     return m and str(m.group(0))
 
 def extractShortUrl(msg):
-    url = findUrl(msg)
-    dest = urllib.urlopen(url).url
-    return url, msg.replace(url, dest)
+    try:
+      url = findUrl(msg)
+      dest = urllib.urlopen(url).url
+      return url, msg.replace(url, dest)
+    except:
+      return None, msg
 
 def send_sina_msgs(msg,coord=None):
     try:
