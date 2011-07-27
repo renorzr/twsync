@@ -39,5 +39,10 @@ class MyParser(sgmllib.SGMLParser):
 
 def searchImage(content):
   parser=MyParser()
-  parser.parse(content)
+
+  try:
+    parser.parse(content)
+  except:
+    pass
+
   return parser.url
