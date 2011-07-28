@@ -58,10 +58,11 @@ def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
 def getImage(url,proxy=None):
   r=url_fetch(url,proxy)
 
-  if r['headers'][-1]['Content-Type'][:5]=='image':
+  content_type = r['headers'] and r['headers'][-1]['Content-Type']
+  if content_type and content_type[:5]=='image':
     return r['content']
 
-  if r['headers'][-1]['Content-Type'][:9]=='text/html':
+  if content_type and content_type[:9]=='text/html':
     url=searchhtml.searchImage(r['content'])
     r=url_fetch(url,proxy)
     return r['content']

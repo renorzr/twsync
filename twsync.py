@@ -65,24 +65,28 @@ def unescape(text):
        return text # leave as is
    return re.sub("&#?\w+;", fixup, text)
 
-def findUrl(msg):
-    m=re.search("http:\/\/[^\s]+",msg)
-    return m and str(m.group(0))
+def findUrls(msg):
+    exp = re.compile("http:\/\/[^\s]+")
+    return exp.findall(msg)
+    
+def resolveShortUrls(msg):
+    urls = findUrls(msg)
+    for url in urls:
+      try:
+        dest = urllib.urlopen(url).url
+        msg = msg.replace(url, dest)
+      except:
+        pass
 
-def extractShortUrl(msg):
-    try:
-      url = findUrl(msg)
-      dest = urllib.urlopen(url).url
-      return url, msg.replace(url, dest)
-    except:
-      return None, msg
+    return urls, msg
 
 def send_sina_msgs(msg,coord=None):
     try:
       msg=unescape(msg)
-      url, msg = extractShortUrl(msg)
+      urls, msg = resolveShortUrls(msg)
       logger.info("send_sina_msgs: "+msg)
-      image=url and getImage(url)
+
+      image = urls and urls[0] and getImage(urls[0])
       if image:
         logger.info('send pic')
         return sina.send_pic(msg,image,coord)
