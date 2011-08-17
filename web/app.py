@@ -80,7 +80,7 @@ def settings(path,params,env):
        # save settings
        request_body=env['wsgi.input'].read(request_body_size)
        d=parse_qs(request_body)
-       allusers[userid]['twitter_name']=d['twitter_name'][0]
+       allusers[userid]['twitter_name']=twitter_name=d['twitter_name'][0]
        allusers[userid]['activated']=d.get('activated') and True or False
        users.save_users(allusers)
        # redirect to synced
@@ -88,6 +88,7 @@ def settings(path,params,env):
        headers=[
         ('Content-Type', 'text/plain'),
         ('Location', '/synced'),
+        ('Set-Cookie', 'twitter_name=%s'%twitter_name),
        ]
        content=''
      else:

@@ -33,7 +33,7 @@ def apply(callback):
 
   return (url,sina.get_request_token())
 
-def add(token,verifier,twitter_name=None):
+def add(token,verifier,twitter_name=''):
   sina=get_sina_client()
   sina.set_request_token(token)
   sina.set_verifier(verifier)
@@ -41,7 +41,7 @@ def add(token,verifier,twitter_name=None):
   sinauser=sina.get_user()
   users=load_users()
   userid=str(sinauser.id)
-  user=users.get(userid, {'activated': False})
+  user=users.get(userid, {'twitter_name': twitter_name, 'activated': True})
   user['sina_id']=sinauser.id
   user['sina_name']=sinauser.screen_name
   user['sina_token']=token
