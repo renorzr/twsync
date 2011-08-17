@@ -103,7 +103,7 @@ def parseTwitter(twitter_id,since_id=None,):
     if since_id:
         url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
     else:
-        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s"%twitter_id
+        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&count=5"%twitter_id
     proxy=config['twitter']['use_proxy'] and sync_proxy
     result = url_fetch(url,proxy=proxy)
     if result['status_code'] == 200:
