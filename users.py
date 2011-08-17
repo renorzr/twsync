@@ -41,7 +41,7 @@ def add(token,verifier,twitter_name=None):
   sinauser=sina.get_user()
   users=load_users()
   userid=str(sinauser.id)
-  user=users[userid]
+  user=users.get(userid, {'activated': False})
   user['sina_id']=sinauser.id
   user['sina_name']=sinauser.screen_name
   user['sina_token']=token
@@ -85,7 +85,7 @@ def get(userid):
   return load_users.get(userid)
   
 def format_user(u):
-  return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u['twitter_name'].ljust(20),(u['activated'] and 'activated' or 'non-activated'))
+  return "%s\t%s\t%s\t%s"%(u['sina_id'],u['sina_name'].ljust(20),u.get('twitter_name','').ljust(20),(u['activated'] and 'activated' or 'non-activated'))
 
 def help():
   print """Usage: python users.py options args
