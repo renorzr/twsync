@@ -89,7 +89,10 @@ def send_sina_msgs(msg,coord=None):
       image = urls and urls[0] and getImage(urls[0])
       if image:
         logger.info('send pic')
-        return sina.send_pic(msg,image,coord)
+        try:
+          return sina.send_pic(msg,image,coord)
+        except:
+          pass
   
       return sina.send_msg(msg,coord)
     except:

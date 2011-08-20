@@ -67,3 +67,4 @@ def getImage(url,proxy=None):
     r=url_fetch(url,proxy)
     return r['content']
 
+  return None
