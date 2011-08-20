@@ -1,12 +1,13 @@
 ---
-sync_interval: 300
-proxy: 
+sync_interval: 300         # interval between syncs (in seconds)
+proxy:                     # proxy settings (usefule to cope with GFW)
   host: localhost
   port: 7070
-  type: socks5
-sina: 
-  key: YOUR_APP_KEY
-  secret: YOUR_APP_SECRET
-  use_proxy: false
-twitter: 
-  use_proxy: false
+  type: socks5             # allow types: http, socks, socks5
+sina:
+  key: YOUR_APP_KEY        # app key from sina
+  secret: YOUR_APP_SECRET  # app secret from sina
+  use_proxy: false         # access sina via the proxy above?
+twitter:
+  use_proxy: false         # access twitter via the proxy above?
+
