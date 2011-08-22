@@ -21,18 +21,35 @@
   <div>
   <form method='POST'>
     <div>Your sina name is ${sina_name}</div>
-    <div>
-      Twitter name
-      <input name="twitter_name" value="${twitter_name}"></input>
-    </div>
-    <div>
-      Sync Enabled
-      <input name="activated" value="1" type="checkbox" ${activated_checked}></input>
-      (Your last 5 tweets will be sent to Weibo when the first time synced)
-    </div>
-    <div>
-      <input type="submit" value="Save Settings" onclick="return check()"/>
-    </div>
+    <table>
+      <tr>
+        <td class="field-title">
+          Twitter name
+        </td>
+        <td>
+          <input name="twitter_name" value="${twitter_name}" size="10"></input>
+        </td>
+      </tr>
+      <tr>
+        <td class="field-title">
+          Sync Enabled
+        </td>
+        <td>
+          <input name="activated" value="1" type="checkbox" ${activated_checked}></input>
+          (Your last 5 tweets will be sent to Weibo when the first time synced)
+        </td>
+      </tr>
+      <tr>
+        <td class="field-title">
+          Ignore Tag
+        </td>
+        <td>
+          <input name="ignore_tag" value="${ignore_tag}" size="4"></input>
+          (tweets start with ignore tag will not be synced. leave it blank if do not want to ignore)
+        </td>
+      </tr>
+    </table>
+    <input type="submit" value="Save Settings" onclick="return check()"/>
   </form>
   </div>
 </div>

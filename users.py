@@ -13,17 +13,11 @@ f=file(dirname+'/config.yaml','r')
 config=yaml.load(f.read())
 f.close()
 
-def upgrade():
+def migrate():
   users=load_users()
-  new_users={}
-  sina=get_sina_client()
   for username in users:
-    u=users[username]
-    print 'sina_token:',u['sina_token']
-    sina.set_access_token(u['sina_token'])
-    sinauser=sina.get_user()
-    new_users[str(sinauser.id)]={'sina_id':sinauser.id,'sina_name':sinauser.screen_name,'twitter_name':username,'sina_token':u['sina_token'],'last_tweet':u['last_tweet'],'activated':u['activated']}
-  save_users(new_users)
+    users[username]['ignore_tag'] = '@'
+  save_users(users)
 
 def apply(callback):
   sina=get_sina_client()
@@ -41,7 +35,13 @@ def add(token,verifier,twitter_name=''):
   sinauser=sina.get_user()
   users=load_users()
   userid=str(sinauser.id)
-  user=users.get(userid, {'twitter_name': twitter_name, 'activated': True})
+  user=users.get(userid, 
+    {
+      'twitter_name' : twitter_name, 
+      'activated'    : True,
+      'ignore_tag'   : '@',
+    }
+  )
   user['sina_id']=sinauser.id
   user['sina_name']=sinauser.screen_name
   user['sina_token']=token
@@ -161,7 +161,7 @@ if __name__ == "__main__":
       help()
   elif option=='ls':
     ls()
-  elif option=='upgrade':
-    upgrade()
+  elif option=='migrate':
+    migrate()
   else:
     help()

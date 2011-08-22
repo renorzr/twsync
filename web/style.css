@@ -50,3 +50,7 @@ div.userinfo{
   float:right;
   display:inline-block;
 }
+
+td.field-title {
+  text-align: right;
+}
