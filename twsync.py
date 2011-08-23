@@ -102,7 +102,7 @@ def send_sina_msgs(msg,coord=None):
       return False
 
 #get one page of to user's replies, 20 messages at most. 
-def parseTwitter(twitter_id, since_id=None, ignore_tag='@'):
+def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False):
     if since_id:
         url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
     else:
@@ -116,7 +116,7 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@'):
         for t in reversed(tweets):
             id=str(t['id'])
             rt=t.get('retweeted_status')
-            text=(rt and t['truncated']) and rt['text'] or t['text']
+            text=(rt and t['truncated'] and no_trunc) and rt['text'] or t['text']
             geo=t['geo']
             coord=geo and geo['coordinates']
             if not (ignore_tag and text.startswith(ignore_tag)):
@@ -148,7 +148,7 @@ def sync_once():
 def sync_user(user):
   logger.info('sync user %s <- %s'%(user['sina_name'],user['twitter_name']))
   sina.set_access_token(user['sina_token'])
-  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'))
+  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False))
 
 def find_user(username):
   return load_users()[username]

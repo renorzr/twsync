@@ -48,6 +48,15 @@
           (tweets start with ignore tag will not be synced. leave it blank if do not want to ignore)
         </td>
       </tr>
+      <tr>
+        <td class="field-title">
+          Keep Original
+        </td>
+        <td>
+          <input type="checkbox" name="keep_original" value="1" ${keep_original} size="4"></input>
+          (Truncate to keep original username if offical RT exceeds the length limitation of Weibo)
+        </td>
+      </tr>
     </table>
     <input type="submit" value="Save Settings" onclick="return check()"/>
   </form>

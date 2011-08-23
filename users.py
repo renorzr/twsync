@@ -40,6 +40,7 @@ def add(token,verifier,twitter_name=''):
       'twitter_name' : twitter_name, 
       'activated'    : True,
       'ignore_tag'   : '@',
+      'no_trunc'     : False,
     }
   )
   user['sina_id']=sinauser.id

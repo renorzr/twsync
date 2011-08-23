@@ -83,6 +83,7 @@ def settings(path,params,env):
        allusers[userid]['twitter_name']=twitter_name=d['twitter_name'][0]
        allusers[userid]['activated']=d.get('activated') and True or False
        allusers[userid]['ignore_tag']=d.get('ignore_tag',[''])[0]
+       allusers[userid]['no_trunc']=not d.get('keep_original')
        users.save_users(allusers)
        # redirect to synced
        status="302 Found"
@@ -99,6 +100,7 @@ def settings(path,params,env):
        user['activated_checked']=user['activated'] and 'checked="1"' or ''
        user['userinfo']=__render_userinfo(user)
        user['ignore_tag'] = user['ignore_tag'].replace('"', '&quot;')
+       user['keep_original'] = (not user.get('no_trunc', True)) and 'checked="1"' or ''
        content=__template(dirname+'/settings.html',user).encode('utf-8')
    else:
      # unauthorized
