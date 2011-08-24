@@ -92,6 +92,8 @@ def send_sina_msgs(msg,coord=None):
         try:
           return sina.send_pic(msg,image,coord)
         except:
+          exc = sys.exc_info()
+          logger.warn(exc[1].__str__())
           pass
   
       return sina.send_msg(msg,coord)
