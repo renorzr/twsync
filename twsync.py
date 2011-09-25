@@ -94,7 +94,6 @@ def send_sina_msgs(msg,coord=None):
         except:
           exc = sys.exc_info()
           logger.warn(exc[1].__str__())
-          pass
   
       return sina.send_msg(msg,coord)
     except:

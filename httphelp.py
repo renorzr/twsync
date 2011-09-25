@@ -26,8 +26,23 @@ class Storage:
             r[l[:spidx]]=l[spidx+1:].strip()
         return h
 
+class LimitedBuffer():
+  def __init__(self, buffer = None, maxsize = 2 * 1024 * 1024):
+    self.buffer  = ''
+    self.maxsize = maxsize
+
+  def write(self, s):
+    self.buffer += s
+    if (len(self.buffer) > self.maxsize):
+      return -1
+    else:
+      return len(s)
+
+  def getvalue(self):
+    return self.buffer
+
 def url_fetch(url,post=None,headers=None,proxy=None,retry=3):
-  b=StringIO()
+  b=LimitedBuffer() #StringIO()
   res_headers=Storage()
   while(retry>0):
     retry-=1
