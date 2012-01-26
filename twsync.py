@@ -23,6 +23,10 @@ from sinaclient import SinaClient
 import json
 import urllib
 
+def rasterize_msg(msg):
+    result = url_fetch(config['raster_url']+'?text='+msg)
+    return result['content']
+
 def make_cookie_header(cookie):
     ret = ""
     for val in cookie.values():
@@ -80,22 +84,26 @@ def resolveShortUrls(msg):
 
     return urls, msg
 
-def send_sina_msgs(msg,coord=None):
+def send_sina_msgs(msg,coord=None,rasterize=False):
     try:
       msg=unescape(msg)
       urls, msg = resolveShortUrls(msg)
       logger.info("send_sina_msgs: "+msg)
 
-      image = urls and urls[0] and getImage(urls[0])
-      if image:
-        logger.info('send pic')
-        try:
-          return sina.send_pic(msg,image,coord)
-        except:
-          exc = sys.exc_info()
-          logger.warn(exc[1].__str__())
+      if rasterize:
+        rasterized = rasterize_msg(msg)
+        return sina.send_pic('from twitter (by twsync.zhirui.org)',rasterized,coord)
+      else:
+        image = urls and urls[0] and getImage(urls[0])
+        if image:
+          logger.info('send pic')
+          try:
+            return sina.send_pic(msg,image,coord)
+          except:
+            exc = sys.exc_info()
+            logger.warn(exc[1].__str__())
   
-      return sina.send_msg(msg,coord)
+        return sina.send_msg(msg,coord)
     except:
       exc=sys.exc_info()
       logger.error(exc[1].__str__())
@@ -103,7 +111,7 @@ def send_sina_msgs(msg,coord=None):
       return False
 
 #get one page of to user's replies, 20 messages at most. 
-def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False):
+def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rasterize=False):
     if since_id:
         url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
     else:
@@ -122,7 +130,7 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False):
             coord=geo and geo['coordinates']
             if not (ignore_tag and text.startswith(ignore_tag)):
                 logger.info('sync (%s) %s'%(id,text))
-                if send_sina_msgs(text,coord):
+                if send_sina_msgs(text,coord,rasterize):
                     lastid=id
                     time.sleep(1)
             else:
@@ -149,7 +157,7 @@ def sync_once():
 def sync_user(user):
   logger.info('sync user %s <- %s'%(user['sina_name'],user['twitter_name']))
   sina.set_access_token(user['sina_token'])
-  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False))
+  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False),rasterize=user.get('rasterize'))
 
 def find_user(username):
   return load_users()[username]

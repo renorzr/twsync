@@ -84,6 +84,7 @@ def settings(path,params,env):
        allusers[userid]['activated']=d.get('activated') and True or False
        allusers[userid]['ignore_tag']=d.get('ignore_tag',[''])[0]
        allusers[userid]['no_trunc']=not d.get('keep_original')
+       allusers[userid]['rasterize']=d.get('rasterize') and True or False
        users.save_users(allusers)
        # redirect to synced
        status="302 Found"
