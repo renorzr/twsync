@@ -5,7 +5,7 @@ class MyParser(sgmllib.SGMLParser):
     self.site=None
     if s.find('picplzthumbs')!=-1:
       self.site='picplz'
-    elif s.find('static.flickr.com')!=-1:
+    elif s.find('staticflickr.com')!=-1:
       self.site='flickr'
     elif s.find('instagram-static')!=-1:
       self.site='instagram'
