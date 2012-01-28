@@ -22,9 +22,11 @@ from httphelp import getImage
 from sinaclient import SinaClient
 import json
 import urllib
+import random
 
-def rasterize_msg(msg):
-    result = url_fetch(config['raster_url']+'?text='+msg)
+def rasterize_msg(msg, coord, pic):
+    params = {'text': msg.encode('utf-8')}
+    result = url_fetch(config['raster_url'], urllib.urlencode(params))
     return result['content']
 
 def make_cookie_header(cookie):
@@ -90,20 +92,33 @@ def send_sina_msgs(msg,coord=None,rasterize=False):
       urls, msg = resolveShortUrls(msg)
       logger.info("send_sina_msgs: "+msg)
 
-      if rasterize:
-        rasterized = rasterize_msg(msg)
-        return sina.send_pic('from twitter (by twsync.zhirui.org)',rasterized,coord)
-      else:
-        image = urls and urls[0] and getImage(urls[0])
-        if image:
-          logger.info('send pic')
-          try:
-            return sina.send_pic(msg,image,coord)
-          except:
-            exc = sys.exc_info()
-            logger.warn(exc[1].__str__())
+      image = urls and urls[0] and getImage(urls[0])
+      if image:
+        logger.info('send pic')
+        try:
+          return sina.send_pic(msg,image,coord)
+        except:
+          exc = sys.exc_info()
+          logger.warn(exc[1].__str__())
   
-        return sina.send_msg(msg,coord)
+      return sina.send_msg(msg,coord)
+    except:
+      exc=sys.exc_info()
+      logger.error(exc[1].__str__())
+      logger.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))
+      return False
+
+def send_pic_sina_msg(t):
+    try:
+      geo=t['geo']
+      coord=geo and geo['coordinates']
+      msg = t['text']
+      if t.get('retweeted_status'):
+        msg = msg.split(': ')[0] + ': ' + t['retweeted_status']['text']
+      pic = t.get('media_url')
+      rasterized = rasterize_msg(msg, coord, pic)
+      tweet_time = t['created_at']
+      return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time, rasterized, coord)
     except:
       exc=sys.exc_info()
       logger.error(exc[1].__str__())
@@ -130,7 +145,11 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rast
             coord=geo and geo['coordinates']
             if not (ignore_tag and text.startswith(ignore_tag)):
                 logger.info('sync (%s) %s'%(id,text))
-                if send_sina_msgs(text,coord,rasterize):
+                if rasterize:
+                    if send_pic_sina_msg(t):
+                        lastid=id
+                        time.sleep(1)
+                elif send_sina_msgs(text,coord):
                     lastid=id
                     time.sleep(1)
             else:
