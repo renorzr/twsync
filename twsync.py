@@ -120,6 +120,7 @@ def send_pic_sina_msg(t):
       tweet_time = t['created_at']
       return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time, rasterized, coord)
     except:
+      logger.error('failed to send rasterized')
       exc=sys.exc_info()
       logger.error(exc[1].__str__())
       logger.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))

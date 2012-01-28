@@ -102,7 +102,7 @@ def settings(path,params,env):
        user['userinfo']=__render_userinfo(user)
        user['ignore_tag'] = user['ignore_tag'].replace('"', '&quot;')
        user['keep_original'] = (not user.get('no_trunc', True)) and 'checked="1"' or ''
-       user['rasterize_checked']=user['rasterize'] and 'checked="1"' or ''
+       user['rasterize_checked']=user.get('rasterize') and 'checked="1"' or ''
        content=__template(dirname+'/settings.html',user).encode('utf-8')
    else:
      # unauthorized
