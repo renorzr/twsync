@@ -23,6 +23,8 @@ from sinaclient import SinaClient
 import json
 import urllib
 import random
+from datetime import datetime
+from datetime import timedelta
 
 def rasterize_msg(msg, coord, pic):
     params = {'text': msg.encode('utf-8')}
@@ -117,8 +119,8 @@ def send_pic_sina_msg(t):
         msg = msg.split(': ')[0] + ': ' + t['retweeted_status']['text']
       pic = t.get('media_url')
       rasterized = rasterize_msg(msg, coord, pic)
-      tweet_time = t['created_at']
-      return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time, rasterized, coord)
+      tweet_time = datetime.strptime(t['created_at'], '%a %b %d %H:%M:%S +0000 %Y') + timedelta(8.0/24)
+      return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time.strftime('%Y-%m-%d %H:%M:%S'), rasterized, coord)
     except:
       logger.error('failed to send rasterized')
       exc=sys.exc_info()
