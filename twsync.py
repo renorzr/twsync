@@ -28,6 +28,8 @@ from datetime import timedelta
 
 def rasterize_msg(msg, coord, pic):
     params = {'text': msg.encode('utf-8')}
+    if pic:
+        params['pic'] = pic
     result = url_fetch(config['raster_url'], urllib.urlencode(params))
     return result['content']
 
@@ -117,7 +119,7 @@ def send_pic_sina_msg(t):
       msg = t['text']
       if t.get('retweeted_status'):
         msg = msg.split(': ')[0] + ': ' + t['retweeted_status']['text']
-      pic = t.get('media_url')
+      pic = get_media_url(t)
       rasterized = rasterize_msg(msg, coord, pic)
       tweet_time = datetime.strptime(t['created_at'], '%a %b %d %H:%M:%S +0000 %Y') + timedelta(8.0/24)
       return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time.strftime('%Y-%m-%d %H:%M:%S'), rasterized, coord)
@@ -128,12 +130,18 @@ def send_pic_sina_msg(t):
       logger.error(len(exc)>2 and traceback.format_exc(exc[2]) or str(exc))
       return False
 
+def get_media_url(t):
+    try:
+        return t['entities']['media'][0]['media_url']
+    except:
+        return False
+
 #get one page of to user's replies, 20 messages at most. 
 def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rasterize=False):
+    url = "http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&include_entities=1&screen_name=%s&count=5"%twitter_id
     if since_id:
-        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&since_id=%s"%(twitter_id,since_id)
-    else:
-        url="http://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&include_rts=true&screen_name=%s&count=5"%twitter_id
+        url += "&since_id="+since_id
+
     proxy=config['twitter']['use_proxy'] and sync_proxy
     result = url_fetch(url,proxy=proxy)
     if result['status_code'] == 200:
