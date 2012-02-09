@@ -132,7 +132,7 @@ def send_pic_sina_msg(t):
 
 def get_media_url(t):
     try:
-        return t['entities']['media'][0]['media_url']
+        return (t.get('retweeted_status') or t)['entities']['media'][0]['media_url']
     except:
         return False
 
@@ -187,7 +187,9 @@ def sync_once():
 def sync_user(user):
   logger.info('sync user %s <- %s'%(user['sina_name'],user['twitter_name']))
   sina.set_access_token(user['sina_token'])
-  return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False),rasterize=user.get('rasterize'))
+  if user['twitter_name']:
+    return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False),rasterize=user.get('rasterize'))
+  return False
 
 def find_user(username):
   return load_users()[username]
