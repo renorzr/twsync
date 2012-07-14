@@ -13,6 +13,8 @@ class MyParser(sgmllib.SGMLParser):
       self.site='4sq'
     elif s.find('twitpic.com/show/')!=-1:
       self.site='twitpic'
+    elif s.find('douban.com/js/')!=-1:
+      self.site='douban'
 
     self.feed(s)
     self.close()
@@ -28,6 +30,7 @@ class MyParser(sgmllib.SGMLParser):
          (self.site=='instagram' and name=="class" and value=="photo") or \
          (self.site=='flickr' and name=="alt" and value=="photo") or \
          (self.site=='4sq' and name=="class" and value=="mainPhoto") or \
+         (self.site=='douban' and name=="rel" and value=="v:image") or \
          (self.site=='twitpic' and name=='id' and value=='photo-display'):
         found=True
       elif name=="src":
