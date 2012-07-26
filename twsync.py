@@ -19,12 +19,12 @@ import pycurl
 import traceback
 from httphelp import url_fetch
 from httphelp import getImage
-from sinaclient import SinaClient
 import json
 import urllib
 import random
 from datetime import datetime
 from datetime import timedelta
+from weibo import APIClient
 
 def rasterize_msg(msg, coord, pic):
     params = {'text': msg.encode('utf-8')}
@@ -90,22 +90,32 @@ def resolveShortUrls(msg):
 
     return urls, msg
 
+def get_lat_long(coord):
+    if not coord:
+      return (None,None)
+
+    return map(lambda x:str(x),coord)
+
 def send_sina_msgs(msg,coord=None,rasterize=False):
     try:
       msg=unescape(msg)
       urls, msg = resolveShortUrls(msg)
       logger.info("send_sina_msgs: "+msg)
 
+      lat, long = get_lat_long(coord)
       image = urls and urls[0] and getImage(urls[0])
       if image:
         logger.info('send pic')
         try:
-          return sina.send_pic(msg,image,coord)
+          return sina.post.statuses__upload(status=msg,pic=image,lat=lat,long=long)
         except:
           exc = sys.exc_info()
           logger.warn(exc[1].__str__())
   
-      return sina.send_msg(msg,coord)
+      if lat and long:
+        return sina.post.statuses__update(status=msg,lat=lat,long=long)
+      else:
+        return sina.post.statuses__update(status=msg)
     except:
       exc=sys.exc_info()
       logger.error(exc[1].__str__())
@@ -116,13 +126,14 @@ def send_pic_sina_msg(t):
     try:
       geo=t['geo']
       coord=geo and geo['coordinates']
+      lat, long = get_lat_long(coord)
       msg = t['text']
       if t.get('retweeted_status'):
         msg = msg.split(': ')[0] + ': ' + t['retweeted_status']['text']
       pic = get_media_url(t)
       rasterized = rasterize_msg(msg, coord, pic)
       tweet_time = datetime.strptime(t['created_at'], '%a %b %d %H:%M:%S +0000 %Y') + timedelta(8.0/24)
-      return sina.send_pic('from twitter (by twsync.zhirui.org) ' + tweet_time.strftime('%Y-%m-%d %H:%M:%S'), rasterized, coord)
+      return sina.post.statuses__upload(status='from twitter (by twsync.zhirui.org) ' + tweet_time.strftime('%Y-%m-%d %H:%M:%S'), pic=rasterized, lat=lat, long=long)
     except:
       logger.error('failed to send rasterized')
       exc=sys.exc_info()
@@ -143,7 +154,8 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rast
         url += "&since_id="+since_id
 
     proxy=config['twitter']['use_proxy'] and sync_proxy
-    result = url_fetch(url,proxy=proxy)
+    #result = url_fetch(url,proxy=proxy)
+    result={'status_code':200,'content':'[{"id":99999999,"text":"test"}]'}
     if result['status_code'] == 200:
         content=result['content']
         tweets=json.loads(content)
@@ -152,7 +164,7 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rast
             id=str(t['id'])
             rt=t.get('retweeted_status')
             text=(rt and t['truncated'] and no_trunc) and rt['text'] or t['text']
-            geo=t['geo']
+            geo=t.get('geo')
             coord=geo and geo['coordinates']
             if not (ignore_tag and text.startswith(ignore_tag)):
                 logger.info('sync (%s) %s'%(id,text))
@@ -186,7 +198,7 @@ def sync_once():
 
 def sync_user(user):
   logger.info('sync user %s <- %s'%(user['sina_name'],user['twitter_name']))
-  sina.set_access_token(user['sina_token'])
+  sina.set_access_token(user['sina_token'], user.get('expires') or 9999999999)
   if user['twitter_name']:
     return parseTwitter(twitter_id=user['twitter_name'],since_id=user.get('last_tweet'),ignore_tag=user.get('ignore_tag','@'),no_trunc=user.get('no_trunc',False),rasterize=user.get('rasterize'))
   return False
@@ -265,7 +277,7 @@ f.close()
 sync_proxy=config['proxy']
 use_proxy=config['sina']['use_proxy'] or config['twitter']['use_proxy']
 sync_proxy['type']=use_proxy and get_curl_proxy_type(config['proxy']['type'])
-sina=SinaClient(config['sina']['key'],config['sina']['secret'])
+sina=APIClient(config['sina']['key'],config['sina']['secret'],'http://twsync.zhirui.org/authorized')
 sync_interval=config.get('sync_interval') or 300
 
 if len(sys.argv)<2:

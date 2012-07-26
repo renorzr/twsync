@@ -20,9 +20,9 @@ import users
 
 def login(path,params,env):
     logger.info('apply')
-    url,token=users.apply('http://'+env['HTTP_HOST']+'/authorized')
+    users.init_sina('http://'+env['HTTP_HOST']+'/authorized')
+    url = users.apply()
     headers=[
-      ('Set-Cookie', 'token='+token),
       ('Set-Cookie', 'twitter_name='+params.get('twitter_name','')),
       ('Location', url),
     ]
@@ -30,7 +30,6 @@ def login(path,params,env):
 
 def logout(path,params,env):
     headers=[
-      ('Set-Cookie', 'token='),
       ('Set-Cookie', 'twitter_name='),
       ('Set-Cookie', 'sina_name='),
       ('Set-Cookie', 'session='),
@@ -43,10 +42,8 @@ def logout(path,params,env):
 def authorized(path,params,env):
     logger.info('authorized')
     cookie=Cookie.SimpleCookie(env['HTTP_COOKIE'])
-    token=cookie['token'].value
-    verifier=params['oauth_verifier']
     name=cookie['twitter_name'].value
-    succ,user=users.add(token,verifier,name)
+    succ,user=users.add(params['code'],name)
     logger.info('add user '+(succ and 'ok' or 'failed'))
     logger.debug(str(user))
     cs1='sina_name=%s'%urllib.quote_plus(user['sina_name'].encode('unicode_escape'))

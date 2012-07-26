@@ -1,9 +1,9 @@
 import sys
 import yaml
-from sinaclient import SinaClient
 from urllib import urlencode
 import os
 import random
+from weibo import APIClient
 
 ###############################
 ## initialize
@@ -12,6 +12,11 @@ dirname=os.path.dirname(os.path.realpath(__file__))
 f=file(dirname+'/config.yaml','r')
 config=yaml.load(f.read())
 f.close()
+sina = None
+
+def init_sina(callback):
+  global sina
+  sina = get_sina_client(callback)
 
 def migrate():
   users=load_users()
@@ -19,23 +24,17 @@ def migrate():
     users[username]['ignore_tag'] = '@'
   save_users(users)
 
-def apply(callback):
-  sina=get_sina_client()
-  url=sina.get_auth_url()
-  if callback:
-    url+='&'+urlencode({'oauth_callback':callback})
+def apply():
+  return sina.get_authorize_url()
 
-  return (url,sina.get_request_token())
-
-def add(token,verifier,twitter_name=''):
-  sina=get_sina_client()
-  sina.set_request_token(token)
-  sina.set_verifier(verifier)
-  token=sina.get_access_token()
-  sinauser=sina.get_user()
+def add(code,twitter_name=''):
+  r = sina.request_access_token(code)
+  sina.set_access_token(r.access_token, r.expires_in)
+  sina_id   = str(sina.account__get_uid().uid)
+  sina_name = sina.users__show(uid=sina_id).screen_name
+  user_id = sina_id
   users=load_users()
-  userid=str(sinauser.id)
-  user=users.get(userid, 
+  user=users.get(user_id, 
     {
       'twitter_name' : twitter_name, 
       'activated'    : True,
@@ -43,21 +42,21 @@ def add(token,verifier,twitter_name=''):
       'no_trunc'     : False,
     }
   )
-  user['sina_id']=sinauser.id
-  user['sina_name']=sinauser.screen_name
-  user['sina_token']=token
-  user['session']='%08X'%(random.random()*0xffffffff)
-  user['activated']=user.get('activated',True)
-  users[userid]=user
+  user['sina_id']    = sina_id
+  user['sina_name']  = sina_name
+  user['sina_token'] = r.access_token
+  user['expires']    = r.expires_in
+  user['session']    = '%08X'%(random.random()*0xffffffff)
+  user['activated']  = user.get('activated',True)
+  users[user_id]     = user
   if save_users(users):
     return (True, user)
   else:
     return (False, user)
 
 def register(twitter_name):
-  sina=get_sina_client()
   users=load_users()
-  url=sina.get_auth_url()
+  url=sina.get_authorize_url()
   verifier=raw_input('goto '+url+' get pin code:')
   succ,user=add(sina.get_request_token(),verifier,twitter_name)
   print 'register '+(succ and 'ok' or 'fail')
@@ -118,8 +117,8 @@ def save_users(users):
   except:
     return False
 
-def get_sina_client():
-  return SinaClient(config['sina']['key'],config['sina']['secret'])
+def get_sina_client(callback):
+  return APIClient(config['sina']['key'],config['sina']['secret'],callback)
 
 ####################
 # main starts here
@@ -134,9 +133,8 @@ if __name__ == "__main__":
     else:
       help()
   elif option=='apply':
-    url,token=apply(len(sys.argv)>2 and sys.argv[2])
+    url = apply(len(sys.argv)>2 and sys.argv[2])
     print url
-    print token
   elif option=='register':
     username=len(sys.argv)>2 and sys.argv[2]
     if username:
