@@ -37,8 +37,8 @@ class BasicAuthHandler(AuthHandler):
 class OAuthHandler(AuthHandler):
     """OAuth authentication handler"""
 
-    OAUTH_HOST = 'api.t.sina.com.cn'
-    OAUTH_ROOT = '/oauth/'
+    OAUTH_HOST = 'api.weibo.com'
+    OAUTH_ROOT = '/oauth2/'
 
     def __init__(self, consumer_key, consumer_secret, callback=None, secure=False):
         self._consumer = oauth.OAuthConsumer(consumer_key, consumer_secret)
