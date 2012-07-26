@@ -14,7 +14,7 @@ class API(object):
     """Twitter API"""
 
     def __init__(self, auth_handler=None,
-            host='api.t.sina.com.cn', search_host='api.t.sina.com.cn',
+            host='api.weibo.com', search_host='api.t.sina.com.cn',
              cache=None, secure=False, api_root='', search_root='',
             retry_count=0, retry_delay=0, retry_errors=None,source=None,
             parser=None, log = None):
@@ -163,7 +163,7 @@ class API(object):
 
     """ statuses/update """
     update_status = bind_api(
-        path = '/statuses/update.json',
+        path = '/2/statuses/update.json',
         method = 'POST',
         payload_type = 'status',
         allowed_param = ['status', 'lat', 'long', 'source'],
