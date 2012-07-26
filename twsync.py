@@ -154,8 +154,8 @@ def parseTwitter(twitter_id, since_id=None, ignore_tag='@', no_trunc=False, rast
         url += "&since_id="+since_id
 
     proxy=config['twitter']['use_proxy'] and sync_proxy
-    #result = url_fetch(url,proxy=proxy)
-    result={'status_code':200,'content':'[{"id":99999999,"text":"test"}]'}
+    result = url_fetch(url,proxy=proxy)
+    #result={'status_code':200,'content':'[{"id":99999999,"text":"test"}]'}
     if result['status_code'] == 200:
         content=result['content']
         tweets=json.loads(content)
